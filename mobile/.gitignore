@@ -1,0 +1,25 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+
+# dependencies
+/node_modules
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+*.log*
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
