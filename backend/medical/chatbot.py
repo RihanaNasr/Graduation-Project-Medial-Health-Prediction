@@ -1,133 +1,126 @@
-import re
-import random
 import google.generativeai as genai
 import os
+import pandas as pd
+import datetime
+import re
+import numpy as np
 from decouple import config
+from django.conf import settings
 
+# For direct debugging
+DEBUG_LOG_FILE = os.path.join(settings.BASE_DIR, 'bot_debug.log')
+
+def log_debug(message):
+    timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+    with open(DEBUG_LOG_FILE, 'a', encoding='utf-8') as f:
+        f.write(f"[{timestamp}] {message}\n")
 
 class MedicalChatbot:
-    """Hybrid medical chatbot: Rules-based for specific symptoms, AI (Gemini) for everything else"""
+    """Conversational Explainable AI Chatbot for CardiGO."""
     
     def __init__(self):
-        # Configure Gemini
+        log_debug("--- Initializing Chatbot (XAI Version) ---")
         self.api_key = config('GOOGLE_API_KEY', default=None)
         self.ai_enabled = False
+        self.df = None
         
         if self.api_key and self.api_key != 'your-gemini-api-key-here':
             try:
                 genai.configure(api_key=self.api_key)
-                self.model = genai.GenerativeModel('gemini-2.0-flash-lite-preview-12-2025')
+                self.model = genai.GenerativeModel('gemini-2.0-flash-lite')
                 self.ai_enabled = True
-            except Exception as e:
-                print(f"Error configuring Gemini: {e}")
+            except: pass
 
-        self.responses = {
-            'greeting': [
-                "Hello! I'm VitalCare AI. How can I assist you with your health concerns today?",
-                "Hi there! I'm here to help you with medical information. What's on your mind?",
-                "Welcome to VitalCare! How may I help you today?"
-            ],
-            'headache': [
-                "For a headache, try resting in a dark, quiet room. Stay hydrated, and you might consider over-the-counter pain relief like Ibuprofen or Paracetamol if suitable for you. If it's severe or accompanied by a stiff neck, seek medical help.",
-                "Headaches can often be relieved by staying hydrated, reducing screen time, or using a warm/cold compress on your forehead. Ensure you're getting enough sleep."
-            ],
-            'fever': [
-                "To manage a fever, stay hydrated with plenty of water or electrolyte drinks. Get plenty of rest and keep the room cool. You can use over-the-counter medications like acetaminophen to reduce the temperature.",
-                "If you have a fever, rest and fluids are key. Monitor your temperature and seek medical attention if it goes above 39.4°C (103°F) or lasts more than three days."
-            ],
-            'cough_cold': [
-                "For a cough or cold, try warm salt water gargles, honey with warm water, and staying hydrated. Humidifiers can also help soothe your throat and nasal passages.",
-                "Make sure to get plenty of rest and drink lots of fluids. Over-the-counter cough suppressants or decongestants may help manage your symptoms."
-            ],
-            'stomach_ache': [
-                "For a stomach ache, try drinking ginger tea or peppermint tea. Avoid heavy or spicy foods until you feel better. If the pain is sharp and localized, please consult a doctor.",
-                "Resting with a heating pad on your abdomen can help. Stick to the BRAT diet (Bananas, Rice, Applesauce, Toast) if you're also feeling nauseous."
-            ],
-            'symptoms': [
-                "I understand you're experiencing symptoms. Please describe them in more detail so I can offer better suggestions. Remember to consult a professional for a proper diagnosis.",
-                "Thank you for sharing. General advice for most symptoms includes rest, hydration, and monitoring. What other symptoms are you feeling?"
-            ],
-            'medication': [
-                "For medication-related questions, I recommend consulting with your doctor or pharmacist for personalized advice.",
-                "Medication information varies by individual. Please consult your healthcare provider for specific recommendations."
-            ],
-            'emergency': [
-                "⚠️ This sounds like an emergency! Please call emergency services (911) or visit the nearest emergency room immediately!",
-                "⚠️ For urgent medical situations, please seek immediate medical attention or call emergency services!"
-            ],
-            'general_health': [
-                "Maintaining a healthy lifestyle includes regular exercise, balanced diet, adequate sleep, and stress management.",
-                "General health tips: Stay hydrated, eat nutritious foods, exercise regularly, get enough sleep, and schedule regular check-ups."
-            ],
-            'heart_rate': [
-                "If your heart rate is high, try to sit or lie down and focus on deep, slow breaths. Avoid caffeine or nicotine. If it's accompanied by chest pain, dizziness, or shortness of breath, please seek medical attention immediately.",
-                "A high heart rate can be caused by stress, exercise, or dehydration. Try relaxation techniques and drink some water. If it persists while resting, consult a doctor."
-            ],
-            'chest_pain': [
-                "⚠️ Chest pain can be a sign of a serious condition. Please rest immediately. If the pain is sharp, crushing, or spreads to your arm/jaw, call emergency services (911) right away!",
-                "⚠️ For any chest discomfort, it is safest to seek immediate medical evaluation. Do not ignore persistent chest pain."
-            ],
-            'help_request': [
-                "I'm here to help you find solutions! Could you tell me exactly what you're feeling? For example, are you having a headache, high heart rate, or fever?",
-                "I can give you home care advice if you tell me your symptoms (like 'I have a cough' or 'my heart is racing'). What's going on?"
-            ],
-            'default': [
-                "I want to provide a specific solution for you! Could you describe your symptoms? (e.g., 'I have a headache' or 'I feel dizzy')",
-                "I'm VitalCare AI. If you tell me what you're feeling (e.g., pain, fever, heart rate), I can give you some helpful advice!",
-                "I'm not quite sure about that one. Could you try rephrasing or telling me about a specific symptom?"
-            ]
-        }
-        
-        self.patterns = {
-            'greeting': r'\b(hi|hello|hey|good morning|good afternoon|good evening)\b',
-            'chest_pain': r'\b(chest pain|heart pain|tight chest|chest pressure)\b',
-            'emergency': r'\b(emergency|can\'t breathe|severe bleeding|unconscious|stroke|seizure)\b',
-            'heart_rate': r'\b(heart rate|pulse|heart racing|palpitations|tachycardia|heart beating fast)\b',
-            'headache': r'\b(headache|head ache|migraine|throbbing head|head hurts)\b',
-            'fever': r'\b(fever|high temp|chills|shivering|burning up)\b',
-            'cough_cold': r'\b(cough|cold|sore throat|flu|congestion|runny nose|sneez)\b',
-            'stomach_ache': r'\b(stomach|nausea|vomit|diarrhea|cramp|belly)\b',
-            'symptoms': r'\b(symptom|illness|unwell|sick|ailment)\b',
-            'medication': r'\b(medicine|medication|drug|pill|prescription|dose)\b',
-            'help_request': r'\b(what should i do|help me|need advice|how to treat|how to fix|medical help)\b',
-        }
-    
-    def get_ai_response(self, message):
-        """Get response from Gemini AI as a GPT-like fallback"""
-        if not self.ai_enabled:
-            return "I'd love to give you a detailed AI answer, but my AI core (Gemini API) isn't configured yet. Please add a valid GOOGLE_API_KEY to the backend .env file to enable GPT-like responses!"
-        
         try:
-            # System instructions for the AI
-            prompt = f"You are VitalCare AI, a professional medical assistant chatbot. Provide helpful, detailed, and empathetic medical advice, plans, and solutions. If the user asks for a schedule or diet plan, provide a complete one. Always include a reminder to consult a doctor. User message: {message}"
-            response = self.model.generate_content(prompt)
-            return response.text
-        except Exception as e:
-            print(f"Gemini API Error: {str(e)}")
-            return random.choice(self.responses['default'])
+            dataset_path = os.path.join(settings.BASE_DIR.parent, 'Health_Risk_Dataset.csv')
+            if os.path.exists(dataset_path):
+                self.df = pd.read_csv(dataset_path)
+        except: pass
 
-    def get_response(self, message):
-        """Generate response based on user message"""
-        message_lower = message.lower()
-        
-        # 1. ONLY check for CRITICAL or SIMPLE patterns first
-        # We removed 'general_health' (diet/exercise) so AI handles those complex requests
-        priority_order = ['chest_pain', 'emergency', 'heart_rate', 'headache', 'fever', 'cough_cold', 'stomach_ache', 'medication', 'greeting']
-        
-        for category in priority_order:
-            if category in self.patterns and re.search(self.patterns[category], message_lower):
-                return random.choice(self.responses[category])
-        
-        # 2. For EVERYTHING else (diet plans, schedules, complex questions), use the AI
-        return self.get_ai_response(message)
-    
-    def process_message(self, user_message):
-        """Process user message and return AI response"""
-        response = self.get_response(user_message)
-        
-        # Add disclaimer (only if it's not already a very long AI response which likely has its own)
-        if len(response) < 500:
-            disclaimer = "\n\n💡 Note: This is general health information. Always consult with qualified healthcare professionals for medical advice."
-            return response + disclaimer
-        
-        return response
+    def get_local_fallback(self, message, user=None):
+        """Conversational State Engine with Explainable AI logic."""
+        msg = message.lower()
+        log_debug(f"XAI Flow: {msg[:30]}")
+
+        # 1. SPECIALIZED XAI: "WHY?" LOGIC
+        if any(kw in msg for kw in ['why', 'explain', 'how', 'reason', 'because']):
+            # Access previous chat context to see what vitals we just discussed
+            prev_vitals = {}
+            try:
+                from .models import ChatMessage
+                last_chat = ChatMessage.objects.filter(user=user).order_by('-timestamp').first()
+                if last_chat:
+                    # Try to extract numbers from previous user message if they aren't in current one
+                    prev_msg = last_chat.message.lower()
+                    hr_m = re.search(r'(?:heart rate|hr|pulse).*?(\d+)', prev_msg)
+                    oxy_m = re.search(r'(?:oxygen|o2|sat|spo2).*?(\d+)', prev_msg)
+                    if hr_m: prev_vitals['Heart_Rate'] = int(hr_m.group(1))
+                    if oxy_m: prev_vitals['Oxygen_Saturation'] = int(oxy_m.group(1))
+
+            except: pass
+
+            if prev_vitals and self.df is not None:
+                # Compare against Low Risk average
+                low_risk_df = self.df[self.df['Risk_Level'] == 'Low']
+                avg_hr = low_risk_df['Heart_Rate'].mean()
+                avg_o2 = low_risk_df['Oxygen_Saturation'].mean()
+                
+                hr_user = prev_vitals.get('Heart_Rate', 86)
+                o2_user = prev_vitals.get('Oxygen_Saturation', 98)
+                
+                hr_diff = ((hr_user - avg_hr) / avg_hr) * 100
+                o2_diff = (avg_o2 - o2_user)
+                
+                explanation = "CardiGO Deep Explanation (XAI):\n\n"
+                explanation += f"Our analysis of 10,000+ clinical cases shows that your vitals deviate from the 'Low Risk' averages:\n"
+                if abs(hr_diff) > 10:
+                    status = "HIGH" if hr_diff > 0 else "LOW"
+                    explanation += f"- Heart Rate ({hr_user} bpm) is {abs(hr_diff):.1f}% {status}er than our healthy average of {avg_hr:.0f} bpm.\n"
+                if o2_diff > 2:
+                    explanation += f"- Oxygen Saturation ({o2_user}%) is {o2_diff:.1f}% lower than the healthy benchmark of {avg_o2:.0f}%.\n"
+                
+                explanation += "\nBased on these specific mathematical correlations in our Health_Risk_Dataset, our system flags these as primary risk factors."
+                return explanation
+
+        # 2. HEART RISK / DATA ENGINE
+        # (Included for direct vital queries)
+        vitals = {}
+        hr_match = re.search(r'(?:heart rate|hr|pulse).*?(\d+)', msg)
+        oxy_match = re.search(r'(?:oxygen|o2|sat|spo2).*?(\d+)', msg)
+        if hr_match or oxy_match:
+            hr = int(hr_match.group(1)) if hr_match else 86
+            o2 = int(oxy_match.group(1)) if oxy_match else 98
+            if self.df is not None:
+                filtered = self.df[(self.df['Heart_Rate'] >= hr-10) & (self.df['Heart_Rate'] <= hr+10)]
+                risk = filtered['Risk_Level'].value_counts().index[0] if not filtered.empty else "Low"
+                return f"CardiGO Assessment: Risk is **{risk}**. (HR:{hr}, O2:{o2}). Ask me 'Why?' for a deep explanation."
+
+        # 3. GENERAL CATEGORIES (Conversational)
+        if "headache" in msg: return "I see you have a headache. Heart rate changes can often cause sudden headaches. Do you feel any chest pressure or shortness of breath?"
+        if "sleep" in msg: return "Rest is vital for heart health. Aim for 7.5+ hours. Are you experiencing fatigue during the day?"
+        if "history" in msg or "report" in msg:
+            if user:
+                try:
+                    from .models import MedicalRecord
+                    r = MedicalRecord.objects.get(user=user)
+                    return f"Daily Report:\n- HR: {r.heart_rate} bpm\n- SpO2: {r.spo2}%\n- BP: {r.blood_pressure}\n- Status: Vitals are synchronized."
+                except: pass
+
+        return "CardiGO AI: I'm here for professional health advice and data-driven risk assessment. How can I assist you today?"
+
+    def process_message(self, user_message, user=None):
+        if self.ai_enabled:
+            try:
+                log_debug(f"Requesting Gemini XAI flow...")
+                # Optimized prompt for Gemini with XAI instructions
+                prompt = f"""You are CardiGO AI, a professional medical assistant with XAI (Explainable AI) capabilities.
+Always explain the 'Why' using percentages and dataset averages if the user asks for more detail.
+Dataset reference: {self.df.sample(5).to_csv() if self.df is not None else ''}
+
+User Message: {user_message}"""
+                response = self.model.generate_content(prompt)
+                return response.text
+            except Exception as e:
+                log_debug(f"API Quota: {str(e)}")
+                return self.get_local_fallback(user_message, user=user)
+        return self.get_local_fallback(user_message, user=user)

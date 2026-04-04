@@ -1,92 +1,93 @@
-# Graduation-Project-Medial-Health-Prediction - VitalCare
+# 🩺 CardiGO - AI Cardiac Health Companion
 
-A comprehensive medical mobile application built with Django REST Framework and React Native.
+**CardiGO** is a high-impact, feature-rich medical application designed to monitor cardiovascular health through AI-driven analytics, real-time risk assessment, and safety-critical features. This project serves as a comprehensive bridge between home monitoring and professional care.
 
-## Features
+---
 
-### Authentication
-- User Registration (Sign Up)
-- User Login
-- JWT Token-based authentication
-- Profile Management
+## 🚀 Key Elite Features
 
-### Core Functionality
-- **Dashboard**: Interactive AI chatbot for medical assistance
-- **Medical Records**: Store and manage patient health information
-- **Profile**: View and update user profile
-- **Help & Support**: Access to emergency contacts and information
+### 1. Hybrid AI Chatbot (Explainable AI - XAI)
+- **Intelligent Diagnosis:** Advanced symptom analysis using Google Gemini Pro.
+- **Explainable Mode:** Users can ask "Why?" to understand the medical reasoning behind AI risk assessments.
+- **Voice-to-Symptom:** Accessibility-first microphone integration for hands-free symptom descriptions.
+- **Local Fallback Engine:** A robust statistical fallback ensures the chatbot remains functional even during API quota exhaustion.
 
-### AI Integration
-- Medical chatbot for health queries
-- Rule-based medical advice system
+### 2. Safety & Emergency (SOS)
+- **One-Tap Emergency SOS:** A safety-critical feature that instantly triggers a backend alert.
+- **Automated Vitals Dispatch:** Sends the user's latest heart rate, SpO2, and BP directly to their emergency contacts and simulated emergency services.
 
-## Tech Stack
+### 3. Smart Analytics Dashboard
+- **Weekly Trend Monitoring:** Fully dynamic chart mapping cardiovascular data over the last 7 days.
+- **Anomaly Detection:** Automatically highlights high heart rate readings in **RED** to warn users of potential risks.
+- **Tappable Details:** Detailed analytics available for every day of history.
 
-### Backend
-- Django 4.x
-- Django REST Framework
-- SQLite/PostgreSQL
-- JWT Authentication
-- CORS enabled
+### 4. Professional Health Export
+- **PDF-Ready Report:** Generates a professional summary for doctors, including vital trends, risk history, and physician-compliant notes.
+- **Tele-Health Bridge:** Direct sharing from the appointment screen to medical specialists like "Dr. Sarah."
 
-### Frontend
-- React Native
-- React Navigation
-- Axios for API calls
-- AsyncStorage for local data
-- Modern UI components
+### 5. Premium Mobile Experience
+- **Dark Mode Persistence:** Global theme switching with persistent state across app sessions.
+- **Premium Aesthetics:** Slate-dark palette for low-light legibility and vivid gradient UIs.
+- **State Management:** Seamless synchronization between the Django REST Backend and React Native front-end.
 
-## Project Structure
+---
+
+## 🛠️ Tech Stack
+
+### Backend (Django)
+- **Framework:** Django 4.2.9 + REST Framework
+- **Auth:** JWT (JSON Web Tokens) with rotation and blacklist support.
+- **Database:** SQLite (Development) / PostgreSQL (Production ready)
+- **AI:** Google Generative AI (Gemini Pro) + Local Statistical Inference.
+
+### Frontend (React Native)
+- **App Platform:** Expo / React Native
+- **Styling:** LinearGradients, Svg Vector Icons, and Vanilla CSS.
+- **State:** React Context API + AsyncStorage.
+- **Network:** Axios with configurable timeout buffers.
+
+---
+
+## 📁 Project Structure
 
 ```
-VitalCare/
-├── backend/              # Django backend
-│   ├── vitalcare/       # Main Django project
-│   ├── users/           # User authentication & profiles
-│   ├── medical/         # Medical records & chatbot
-│   └── requirements.txt
-├── mobile/              # React Native frontend
+GRAD_PROJECT/
+├── backend/              # Django REST API Hub
+│   ├── cardigo/          # Core Settings & URLs
+│   ├── medical/          # AI Engine, Models & Views
+│   ├── users/            # Token Authentication
+│   └── .env              # API Environment Keys
+├── mobile/               # Mobile Frontend Application
 │   ├── src/
-│   │   ├── screens/    # App screens
-│   │   ├── components/ # Reusable components
-│   │   ├── navigation/ # Navigation setup
-│   │   └── services/   # API services
-│   └── package.json
+│   │   ├── screens/      # Dashboard, Chat, SOS, History
+│   │   ├── context/      # Theme & Auth Context
+│   │   └── services/     # API Axios Services
+│   └── App.js            # Main Theme Provider Entry
 └── README.md
 ```
 
-## Getting Started
+## 🎯 Quick Start Guide
 
-### Backend Setup
+### 1. Backend Setup
 ```bash
 cd backend
 python -m venv venv
-venv\Scripts\activate  # Windows
+.\venv\Scripts\activate
 pip install -r requirements.txt
 python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
+python manage.py runserver 0.0.0.0:8000
 ```
 
-### Frontend Setup
+### 2. Mobile Setup
 ```bash
 cd mobile
 npm install
-npx react-native run-android  # For Android
-npx react-native run-ios       # For iOS
+npx expo start --port 8082
 ```
+*Note: Ensure your phone is on the same Wi-Fi as your laptop to reach the backend IP.*
 
-## API Endpoints
+---
 
-- `POST /api/auth/register/` - User registration
-- `POST /api/auth/login/` - User login
-- `GET /api/auth/profile/` - Get user profile
-- `PUT /api/auth/profile/` - Update profile
-- `POST /api/medical/records/` - Create medical record
-- `GET /api/medical/records/` - List medical records
-- `POST /api/medical/chat/` - AI chatbot interaction
-- `GET /api/help/contacts/` - Get emergency contacts
-
-## License
-
-MIT License
+## 🛡️ License
+CardiGO - Graduation Project 2026.
+Created by Ahmed & Team.

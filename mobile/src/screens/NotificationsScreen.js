@@ -2,8 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Feather } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
+import { useNavigation } from '@react-navigation/native';
 
 const NotificationsScreen = () => {
+    const { isDark, colors } = useTheme();
+    const navigation = useNavigation();
+
     const notifications = [
         {
             id: '1',
@@ -51,23 +56,43 @@ const NotificationsScreen = () => {
         },
     ];
 
+    const handlePress = (notif) => {
+        if (notif.type === 'alert') {
+            navigation.navigate('Chat AI');
+        } else if (notif.type === 'appointment') {
+            navigation.navigate('Home');
+        } else if (notif.type === 'report') {
+            navigation.navigate('Dashboard');
+        }
+    };
+
     return (
-        <View style={styles.container}>
-            <StatusBar style="dark" />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar style={isDark ? "light" : "dark"} />
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                 {notifications.map((notif, index) => (
                     <TouchableOpacity
                         key={notif.id}
-                        style={[styles.notifCard, !notif.read && styles.unreadCard]}
+                        style={[
+                            styles.notifCard, 
+                            { backgroundColor: colors.card, borderColor: colors.border },
+                            !notif.read && (isDark ? styles.unreadCardDark : styles.unreadCard),
+                            isDark && { borderWidth: 1 }
+                        ]}
+                        onPress={() => handlePress(notif)}
                     >
-                        <View style={[styles.iconWrap, { backgroundColor: notif.bg }]}>
+                        <View style={[styles.iconWrap, { backgroundColor: isDark ? '#1E293B' : notif.bg }]}>
                             <Feather name={notif.icon} size={20} color={notif.color} />
                         </View>
                         <View style={styles.textWrap}>
-                            <Text style={[styles.title, !notif.read && styles.unreadText]}>
+                            <Text style={[
+                                styles.title, 
+                                { color: colors.text },
+                                !notif.read && styles.unreadText
+                            ]}>
                                 {notif.title}
                             </Text>
-                            <Text style={styles.message} numberOfLines={2}>
+                            <Text style={[styles.message, { color: colors.subtext }]} numberOfLines={2}>
                                 {notif.message}
                             </Text>
                             <Text style={styles.time}>{notif.time}</Text>
@@ -99,6 +124,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#F8FBFF',
         borderWidth: 1,
         borderColor: '#E8F1FE',
+    },
+    unreadCardDark: {
+        backgroundColor: '#1E293B',
+        borderColor: '#334155',
     },
     iconWrap: {
         width: 48,

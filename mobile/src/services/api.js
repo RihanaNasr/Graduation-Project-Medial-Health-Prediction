@@ -6,10 +6,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // For iOS simulator: http://localhost:8000
 // For physical device: http://<YOUR_COMPUTER_IP>:8000
 // Use a more stable direct connection for the backend
-const API_URL = 'http://10.21.0.148:8000/api';
+const API_URL = 'http://10.20.229.20:8000/api';
 
 const api = axios.create({
     baseURL: API_URL,
+    timeout: 10000, // Increase to 10 seconds
     headers: {
         'Content-Type': 'application/json',
         'Bypass-Tunnel-Reminder': 'true', // Required for localtunnel to work with Axios
@@ -77,6 +78,9 @@ export const medicalAPI = {
     chat: (message) => api.post('/medical/chat/', { message }),
     getChatHistory: () => api.get('/medical/chat/history/'),
     getHelpContacts: () => api.get('/medical/help/contacts/'),
+    triggerSOS: () => api.post('/medical/sos/'),
+    exportReport: () => api.get('/medical/report/export/'),
+    getRecords: () => api.get('/medical/records/'),
 };
 
 export default api;

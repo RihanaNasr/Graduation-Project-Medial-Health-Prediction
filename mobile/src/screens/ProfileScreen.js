@@ -7,27 +7,38 @@ import {
     ScrollView,
     Platform,
     Switch,
+    TextInput,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const ProfileScreen = ({ navigation }) => {
     const { user, logout } = useAuth();
+    const { isDark, toggleTheme, colors } = useTheme();
     const [alertsEnabled, setAlertsEnabled] = useState(true);
     const [syncEnabled, setSyncEnabled] = useState(true);
     const [emergencyEnabled, setEmergencyEnabled] = useState(false);
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [tempFirstName, setTempFirstName] = useState(user?.first_name || 'Reem');
+    const [tempLastName, setTempLastName] = useState(user?.last_name || 'Ihab');
+
+    const handleNameSave = () => {
+        setIsEditingName(false);
+        // Normally update via API here
+    };
 
     return (
-        <View style={styles.container}>
-            <StatusBar style="dark" />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar style={isDark ? "light" : "dark"} />
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 {/* Header */}
                 <View style={styles.headerRow}>
-                    <Text style={styles.pageTitle}>Settings</Text>
-                    <Text style={styles.pageSub}>Customize your experience</Text>
+                    <Text style={[styles.pageTitle, { color: colors.text }]}>Settings</Text>
+                    <Text style={[styles.pageSub, { color: colors.subtext }]}>Customize your experience</Text>
                 </View>
 
                 {/* Profile Card */}
@@ -42,26 +53,42 @@ const ProfileScreen = ({ navigation }) => {
                             <Text style={styles.avatarEmoji}>👩‍💼</Text>
                         </View>
                         <View style={styles.profileInfo}>
-                            <Text style={styles.profileName}>{user ? `${user.first_name} ${user.last_name}` : 'Ahmed Hassan'}</Text>
+                            {isEditingName ? (
+                                <View style={{ flexDirection: 'row' }}>
+                                    <TextInput 
+                                        style={styles.profileNameInput} 
+                                        value={tempFirstName} 
+                                        onChangeText={setTempFirstName} 
+                                        autoFocus
+                                    />
+                                    <TextInput 
+                                        style={styles.profileNameInput} 
+                                        value={tempLastName} 
+                                        onChangeText={setTempLastName} 
+                                    />
+                                </View>
+                            ) : (
+                                <Text style={styles.profileName}>{tempFirstName} {tempLastName}</Text>
+                            )}
                             <Text style={styles.profilePlan}>Premium Plan ✦</Text>
                         </View>
-                        <TouchableOpacity style={styles.editBtn}>
-                            <Feather name="edit-2" size={16} color="white" />
+                        <TouchableOpacity style={styles.editBtn} onPress={isEditingName ? handleNameSave : () => setIsEditingName(true)}>
+                            <Feather name={isEditingName ? "check" : "edit-2"} size={16} color="white" />
                         </TouchableOpacity>
                     </View>
                 </LinearGradient>
 
                 {/* Section: Monitoring */}
-                <Text style={styles.sectionLabel}>MONITORING</Text>
-                <View style={styles.cardBlock}>
+                <Text style={[styles.sectionLabel, { color: colors.subtext }]}>MONITORING</Text>
+                <View style={[styles.cardBlock, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
                     {/* Item */}
                     <View style={styles.listItem}>
                         <View style={[styles.listIconWrap, { backgroundColor: '#FFF0F3' }]}>
                             <Text style={styles.listEmoji}>❤️</Text>
                         </View>
                         <View style={styles.listContent}>
-                            <Text style={styles.listTitle}>Heart Rate Alerts</Text>
-                            <Text style={styles.listSub}>Notify when abnormal</Text>
+                            <Text style={[styles.listTitle, { color: colors.text }]}>Heart Rate Alerts</Text>
+                            <Text style={[styles.listSub, { color: colors.subtext }]}>Notify when abnormal</Text>
                         </View>
                         <Switch
                             trackColor={{ false: '#E4ECFD', true: '#22C55E' }}
@@ -79,8 +106,8 @@ const ProfileScreen = ({ navigation }) => {
                             <Text style={styles.listEmoji}>🔬</Text>
                         </View>
                         <View style={styles.listContent}>
-                            <Text style={styles.listTitle}>Live Sync</Text>
-                            <Text style={styles.listSub}>Connect hardware device</Text>
+                            <Text style={[styles.listTitle, { color: colors.text }]}>Live Sync</Text>
+                            <Text style={[styles.listSub, { color: colors.subtext }]}>Connect hardware device</Text>
                         </View>
                         <Switch
                             trackColor={{ false: '#E4ECFD', true: '#22C55E' }}
@@ -98,8 +125,8 @@ const ProfileScreen = ({ navigation }) => {
                             <Text style={styles.listEmoji}>🚨</Text>
                         </View>
                         <View style={styles.listContent}>
-                            <Text style={styles.listTitle}>Emergency Alert</Text>
-                            <Text style={styles.listSub}>Auto-call contacts</Text>
+                            <Text style={[styles.listTitle, { color: colors.text }]}>Emergency Alert</Text>
+                            <Text style={[styles.listSub, { color: colors.subtext }]}>Auto-call contacts</Text>
                         </View>
                         <Switch
                             trackColor={{ false: '#E4ECFD', true: '#22C55E' }}
@@ -112,48 +139,67 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
 
                 {/* Section: App Preferences */}
-                <Text style={styles.sectionLabel}>APP PREFERENCES</Text>
-                <View style={styles.cardBlock}>
+                <Text style={[styles.sectionLabel, { color: colors.subtext }]}>APP PREFERENCES</Text>
+                <View style={[styles.cardBlock, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
+                    {/* Toggle: Dark Mode */}
+                    <View style={styles.listItem}>
+                        <View style={[styles.listIconWrap, { backgroundColor: isDark ? '#334155' : '#F4F8FF' }]}>
+                            <Text style={styles.listEmoji}>{isDark ? '🌙' : '☀️'}</Text>
+                        </View>
+                        <View style={styles.listContent}>
+                            <Text style={[styles.listTitle, { color: colors.text }]}>Dark Mode</Text>
+                            <Text style={[styles.listSub, { color: colors.subtext }]}>Comfortable night viewing</Text>
+                        </View>
+                        <Switch
+                            trackColor={{ false: '#E4ECFD', true: '#3A8EF6' }}
+                            thumbColor="white"
+                            onValueChange={toggleTheme}
+                            value={isDark}
+                            style={{ transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }] }}
+                        />
+                    </View>
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
                     <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('Notifications')}>
                         <View style={[styles.listIconWrap, { backgroundColor: '#FFFBEB' }]}>
                             <Text style={styles.listEmoji}>🔔</Text>
                         </View>
                         <View style={styles.listContent}>
-                            <Text style={styles.listTitle}>Notifications</Text>
-                            <Text style={styles.listSub}>Manage reminders</Text>
+                            <Text style={[styles.listTitle, { color: colors.text }]}>Notifications</Text>
+                            <Text style={[styles.listSub, { color: colors.subtext }]}>Manage reminders</Text>
                         </View>
-                        <Feather name="chevron-right" size={18} color="#A0AEC0" />
+                        <Feather name="chevron-right" size={18} color={colors.subtext} />
                     </TouchableOpacity>
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                     <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('Language')}>
                         <View style={[styles.listIconWrap, { backgroundColor: '#E8F1FE' }]}>
                             <Text style={styles.listEmoji}>🌐</Text>
                         </View>
                         <View style={styles.listContent}>
-                            <Text style={styles.listTitle}>Language</Text>
-                            <Text style={styles.listSub}>English</Text>
+                            <Text style={[styles.listTitle, { color: colors.text }]}>Language</Text>
+                            <Text style={[styles.listSub, { color: colors.subtext }]}>English</Text>
                         </View>
-                        <Feather name="chevron-right" size={18} color="#A0AEC0" />
+                        <Feather name="chevron-right" size={18} color={colors.subtext} />
                     </TouchableOpacity>
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                     <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('Privacy')}>
                         <View style={[styles.listIconWrap, { backgroundColor: '#FFF0F3' }]}>
                             <Text style={styles.listEmoji}>🔒</Text>
                         </View>
                         <View style={styles.listContent}>
-                            <Text style={styles.listTitle}>Privacy & Security</Text>
-                            <Text style={styles.listSub}>Data & permissions</Text>
+                            <Text style={[styles.listTitle, { color: colors.text }]}>Privacy & Security</Text>
+                            <Text style={[styles.listSub, { color: colors.subtext }]}>Data & permissions</Text>
                         </View>
-                        <Feather name="chevron-right" size={18} color="#A0AEC0" />
+                        <Feather name="chevron-right" size={18} color={colors.subtext} />
                     </TouchableOpacity>
                 </View>
 
                 {/* Sign Out */}
-                <View style={[styles.cardBlock, { marginTop: 24 }]}>
+                <View style={[styles.cardBlock, { marginTop: 24, backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
                     <TouchableOpacity style={styles.listItem} onPress={() => logout()}>
-                        <View style={[styles.listIconWrap, { backgroundColor: '#FFF0F3' }]}>
+                        <View style={[styles.listIconWrap, { backgroundColor: isDark ? '#334155' : '#FFF0F3' }]}>
                             <Text style={styles.listEmoji}>🚪</Text>
                         </View>
                         <View style={styles.listContent}>
@@ -227,6 +273,15 @@ const styles = StyleSheet.create({
         fontWeight: '900',
         color: '#FFF',
         marginBottom: 4,
+    },
+    profileNameInput: {
+        fontSize: 18,
+        fontWeight: '900',
+        color: '#FFF',
+        borderBottomWidth: 1,
+        borderBottomColor: '#FFF',
+        marginRight: 10,
+        padding: 0,
     },
     profilePlan: {
         fontSize: 12,

@@ -9,11 +9,16 @@ import {
     Platform,
     Alert,
     ActivityIndicator,
-    ScrollView
+    ScrollView,
+    Vibration,
+    Pressable,
+    Modal,
+    Linking,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather, Ionicons } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
 import Svg, { Path } from 'react-native-svg';
 import { useAuth } from '../context/AuthContext';
 
@@ -21,6 +26,11 @@ const LoginScreen = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [socialLoading, setSocialLoading] = useState(false);
+    const [showGoogleSim, setShowGoogleSim] = useState(false);
+    const [googleStep, setGoogleStep] = useState(1); // 1: list, 2: input
+    const [customAccount, setCustomAccount] = useState(null);
+    const [tempEmail, setTempEmail] = useState('');
     const { login } = useAuth();
 
     const handleLogin = async () => {
@@ -35,6 +45,67 @@ const LoginScreen = ({ navigation }) => {
 
         if (!result.success) {
             Alert.alert('Login Failed', result.error);
+        }
+    };
+
+    const handleSocialSelect = async (provider, chosenEmail = null) => {
+        setSocialLoading(true);
+        // Simulator delay
+        setTimeout(async () => {
+            const loginEmail = chosenEmail || tempEmail || 'reem.ihab@gmail.com';
+            const firstName = loginEmail.split('@')[0];
+            
+            const result = await login(null, null, true, {
+                email: loginEmail,
+                first_name: firstName.charAt(0).toUpperCase() + firstName.slice(1),
+                last_name: 'User'
+            });
+            
+            setSocialLoading(false);
+            if (result.success) {
+                setShowGoogleSim(false);
+                setGoogleStep(1);
+            }
+        }, 1500);
+    };
+
+    const handleSocialLogin = async (provider) => {
+        if (provider === 'Google') {
+            try {
+                setSocialLoading(true);
+                // Open real in-app browser window (matches your screenshot)
+                await WebBrowser.openBrowserAsync('https://accounts.google.com');
+                
+                // Once closed, perform the "Demo Bypass" login
+                const result = await login('reem.ihab@gmail.com', 'demo_bypass', true, {
+                    email: 'reem.ihab@gmail.com',
+                    first_name: 'Reem',
+                    last_name: 'Ehab'
+                });
+                setSocialLoading(false);
+                setShowGoogleSim(false); // Cleanup simulator state
+            } catch (err) {
+                setSocialLoading(false);
+                Alert.alert('Error', 'Google sign-in was interrupted.');
+            }
+        } else {
+            // Apple Browser Experience
+            try {
+                setSocialLoading(true);
+                // Open real in-app browser window for Apple (Silent)
+                await WebBrowser.openBrowserAsync('https://appleid.apple.com');
+                
+                // Once closed, perform the "Demo Bypass" login
+                const result = await login('reem_ihab@icloud.com', 'demo_bypass', true, {
+                    email: 'reem_ihab@icloud.com',
+                    first_name: 'Apple',
+                    last_name: 'User'
+                });
+                setSocialLoading(false);
+            } catch (err) {
+                setSocialLoading(false);
+                Alert.alert('Error', 'Apple sign-in was interrupted.');
+            }
         }
     };
 
@@ -105,7 +176,27 @@ const LoginScreen = ({ navigation }) => {
                     </View>
 
                     <View style={styles.forgotPassRow}>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={() => {
+                            Alert.alert(
+                                "Reset Password",
+                                "Please enter your email to receive a secure password reset link.",
+                                [
+                                    { text: "Cancel", style: "cancel" },
+                                    { 
+                                        text: "Send Link", 
+                                        onPress: () => {
+                                            setTimeout(() => {
+                                                Alert.alert(
+                                                    "Check Your Inbox",
+                                                    "A secure verification link has been sent to your email address. Please follow the instructions to reset your password.",
+                                                    [{ text: "OK" }]
+                                                );
+                                            }, 800);
+                                        }
+                                    }
+                                ]
+                            );
+                        }}>
                             <Text style={styles.forgotPassText}>Forgot Password?</Text>
                         </TouchableOpacity>
                     </View>
@@ -136,14 +227,20 @@ const LoginScreen = ({ navigation }) => {
                     </View>
 
                     <View style={styles.socialRow}>
-                        <TouchableOpacity style={styles.socialBtn}>
+                        <Pressable 
+                            style={({ pressed }) => [styles.socialBtn, { opacity: pressed ? 0.6 : 1 }]} 
+                            onPress={() => handleSocialLogin('Google')}
+                        >
                             <Ionicons name="logo-google" size={18} color="#0F1E3C" />
                             <Text style={styles.socialBtnText}>Google</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.socialBtn}>
+                        </Pressable>
+                        <Pressable 
+                            style={({ pressed }) => [styles.socialBtn, { opacity: pressed ? 0.6 : 1 }]} 
+                            onPress={() => handleSocialLogin('Apple')}
+                        >
                             <Ionicons name="logo-apple" size={18} color="#0F1E3C" />
                             <Text style={styles.socialBtnText}>Apple</Text>
-                        </TouchableOpacity>
+                        </Pressable>
                     </View>
 
                     <TouchableOpacity
@@ -157,6 +254,106 @@ const LoginScreen = ({ navigation }) => {
                 </View>
 
             </ScrollView>
+
+            <Modal visible={showGoogleSim} animationType="slide" transparent={true}>
+                <KeyboardAvoidingView 
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={styles.modalOverlay}
+                >
+                    <View style={styles.googleModal}>
+                        <View style={styles.googleHeader}>
+                            <Ionicons name="logo-google" size={24} color="#4285F4" />
+                            <Text style={styles.googleTitle}>
+                                {googleStep === 1 ? 'Choose an account' : 'Sign in'}
+                            </Text>
+                            <Text style={styles.googleSubtitle}>to continue to CardiGo</Text>
+                        </View>
+                        
+                        {socialLoading ? (
+                            <View style={styles.googleSigningIn}>
+                                <ActivityIndicator size="large" color="#4285F4" />
+                                <Text style={styles.googleSigningText}>Signing in...</Text>
+                                <Text style={styles.googleSigningSub}>Finalizing secure connection</Text>
+                            </View>
+                        ) : googleStep === 1 ? (
+                            <>
+                                <TouchableOpacity style={styles.googleAccount} onPress={() => handleSocialSelect('Google')}>
+                                    <View style={[styles.googleAvatar, { backgroundColor: '#3A8EF6' }]}>
+                                        <Text style={styles.googleAvatarText}>R</Text>
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.googleAccountName}>Reem Ehab</Text>
+                                        <Text style={styles.googleAccountEmail}>reem.ihab@gmail.com</Text>
+                                    </View>
+                                </TouchableOpacity>
+
+                                {customAccount && (
+                                    <TouchableOpacity style={styles.googleAccount} onPress={() => handleSocialSelect('Google')}>
+                                        <View style={[styles.googleAvatar, { backgroundColor: '#FF4D6D' }]}>
+                                            <Text style={styles.googleAvatarText}>{customAccount.charAt(0).toUpperCase()}</Text>
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={styles.googleAccountName}>New Account</Text>
+                                            <Text style={styles.googleAccountEmail}>{customAccount}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                )}
+
+                                <TouchableOpacity 
+                                    style={styles.googleAccount} 
+                                    onPress={() => setGoogleStep(2)}
+                                >
+                                    <View style={[styles.googleAvatar, { backgroundColor: '#E2E8F0' }]}>
+                                        <Feather name="user-plus" size={16} color="#4A5568" />
+                                    </View>
+                                    <Text style={styles.googleUseAnother}>Use another account</Text>
+                                </TouchableOpacity>
+
+                                <View style={styles.googleFooter}>
+                                    <Text style={styles.googleFooterText}>
+                                        To continue, Google will share your name, email address, and profile picture with CardiGo. 
+                                        <Text style={{ color: '#4285F4' }}> Privacy Policy</Text>
+                                    </Text>
+                                </View>
+                                
+                                <TouchableOpacity style={styles.googleClose} onPress={() => { setShowGoogleSim(false); setGoogleStep(1); }}>
+                                    <Text style={styles.googleCloseText}>Cancel</Text>
+                                </TouchableOpacity>
+                            </>
+                        ) : (
+                            <View style={styles.googleInputView}>
+                                <TextInput
+                                    style={styles.googleInput}
+                                    placeholder="Email or phone"
+                                    placeholderTextColor="#5F6368"
+                                    value={tempEmail}
+                                    onChangeText={setTempEmail}
+                                    autoFocus
+                                />
+                                <TouchableOpacity style={styles.googleForgotText}>
+                                    <Text style={{ color: '#4285F4', fontWeight: 'bold' }}>Forgot email?</Text>
+                                </TouchableOpacity>
+                                
+                                <View style={styles.googleActionRow}>
+                                    <TouchableOpacity onPress={() => setGoogleStep(1)}>
+                                        <Text style={{ color: '#4285F4', fontWeight: 'bold' }}>Create account</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity 
+                                        style={[styles.googleNextBtn, !tempEmail.trim() && { opacity: 0.5 }]} 
+                                        disabled={!tempEmail.trim()}
+                                        onPress={() => {
+                                            setCustomAccount(tempEmail);
+                                            setGoogleStep(1);
+                                        }}
+                                    >
+                                        <Text style={styles.googleNextText}>Next</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        )}
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
         </KeyboardAvoidingView>
     );
 };
@@ -342,6 +539,134 @@ const styles = StyleSheet.create({
     signupBold: {
         fontWeight: '700',
         color: '#3A8EF6',
+    },
+    // Google Simulator Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    googleModal: {
+        backgroundColor: 'white',
+        borderTopLeftRadius: 30,
+        borderTopRightRadius: 30,
+        paddingTop: 32,
+        paddingHorizontal: 24,
+        paddingBottom: 40,
+    },
+    googleHeader: {
+        alignItems: 'center',
+        marginBottom: 30,
+    },
+    googleTitle: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: '#1A73E8',
+        marginTop: 18,
+    },
+    googleSubtitle: {
+        fontSize: 15,
+        color: '#5F6368',
+        marginTop: 6,
+    },
+    googleAccount: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 18,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F1F3F4',
+    },
+    googleAvatar: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 16,
+    },
+    googleAvatarText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    googleAccountName: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#202124',
+    },
+    googleAccountEmail: {
+        fontSize: 13,
+        color: '#5F6368',
+    },
+    googleUseAnother: {
+        fontSize: 15,
+        color: '#5F6368',
+        fontWeight: '600',
+    },
+    googleFooter: {
+        marginTop: 24,
+        paddingHorizontal: 8,
+    },
+    googleFooterText: {
+        fontSize: 12,
+        color: '#5F6368',
+        lineHeight: 18,
+        textAlign: 'center',
+    },
+    googleClose: {
+        marginTop: 32,
+        alignItems: 'center',
+    },
+    googleCloseText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#4285F4',
+    },
+    googleSigningIn: {
+        alignItems: 'center',
+        paddingVertical: 60,
+    },
+    googleSigningText: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#202124',
+        marginTop: 20,
+    },
+    googleSigningSub: {
+        fontSize: 14,
+        color: '#5F6368',
+        marginTop: 8,
+    },
+    googleInputView: {
+        paddingVertical: 20,
+    },
+    googleInput: {
+        borderWidth: 1,
+        borderColor: '#DADCE0',
+        borderRadius: 4,
+        padding: 16,
+        fontSize: 16,
+        color: '#202124',
+    },
+    googleForgotText: {
+        marginTop: 8,
+        marginBottom: 40,
+    },
+    googleActionRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    googleNextBtn: {
+        backgroundColor: '#1A73E8',
+        paddingHorizontal: 24,
+        paddingVertical: 10,
+        borderRadius: 4,
+    },
+    googleNextText: {
+        color: 'white',
+        fontWeight: '700',
+        fontSize: 14,
     },
 });
 

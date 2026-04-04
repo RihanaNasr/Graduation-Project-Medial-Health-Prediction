@@ -4,7 +4,9 @@ from .views import (
     MedicalRecordListView,
     ChatView,
     ChatHistoryView,
-    HelpContactListView
+    HelpContactListView,
+    SOSView,
+    ReportExportView
 )
 
 urlpatterns = [
@@ -13,4 +15,6 @@ urlpatterns = [
     path('chat/', ChatView.as_view(), name='chat'),
     path('chat/history/', ChatHistoryView.as_view(), name='chat-history'),
     path('help/contacts/', HelpContactListView.as_view(), name='help-contacts'),
+    path('sos/', SOSView.as_view(), name='sos'),
+    path('report/export/', ReportExportView.as_view(), name='report-export'),
 ]

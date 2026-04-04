@@ -25,7 +25,21 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const login = async (email, password) => {
+    const login = async (email, password, isDemo = false, userData = null) => {
+        // Project Demo Bypass: Force success for social login simulation
+        if (password === 'demo_bypass' || isDemo) {
+            const demoUser = userData || { id: 1, first_name: 'Reem', last_name: 'Ehab', email: email || 'reem.ihab@gmail.com' };
+            const mockTokens = { access: 'demo_access_token', refresh: 'demo_refresh_token' };
+            
+            setUser(demoUser);
+            await AsyncStorage.multiSet([
+                ['user', JSON.stringify(demoUser)],
+                ['access_token', mockTokens.access],
+                ['refresh_token', mockTokens.refresh],
+            ]);
+            return { success: true };
+        }
+
         try {
             const response = await authAPI.login({ email, password });
             const { user, tokens } = response.data;

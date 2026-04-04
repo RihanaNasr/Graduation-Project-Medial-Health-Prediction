@@ -1,549 +1,195 @@
-import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    TextInput,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Linking,
-    ActivityIndicator,
-    Platform,
-} from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { medicalAPI } from '../services/api';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Image, TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { Feather, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../context/ThemeContext';
 
 const HelpScreen = () => {
-    const [contacts, setContacts] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { isDark, colors } = useTheme();
 
-    useEffect(() => {
-        loadHelpContacts();
-    }, []);
-
-    const loadHelpContacts = async () => {
-        try {
-            const response = await medicalAPI.getHelpContacts();
-            setContacts(response.data);
-        } catch (error) {
-            console.error('Error loading help contacts:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleCall = (phoneNumber) => {
-        Linking.openURL(`tel:${phoneNumber}`);
+    const makeCall = (number) => {
+        Linking.openURL(`tel:${number}`);
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
             <StatusBar style="light" />
-            <LinearGradient
-                colors={['#22C55E', '#4ADE80']}
-                style={styles.heroHeader}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-            >
-                <View style={styles.heroBgCircle} />
-                <View style={styles.headerTop}>
-                    <TouchableOpacity style={styles.backBtn}>
-                        <Feather name="chevron-left" size={24} color="white" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Help Center</Text>
-                    <TouchableOpacity style={styles.helpBtn}>
-                        <Feather name="info" size={18} color="white" />
-                    </TouchableOpacity>
-                </View>
-
-                <View style={styles.heroContent}>
-                    <View style={styles.heroIconWrap}>
-                        <Text style={styles.heroIcon}>🚨</Text>
+            
+            <LinearGradient colors={['#22C55E', '#10B981']} style={styles.header}>
+                <View style={styles.headerContent}>
+                    <View style={styles.iconCircle}>
+                        <Text style={{ fontSize: 32 }}>🚨</Text>
                     </View>
-                    <View>
-                        <Text style={styles.heroBigTitle}>Emergency{'\n'}Numbers</Text>
-                        <Text style={styles.heroSubTitle}>Available 24/7 · All free</Text>
-                    </View>
+                    <Text style={styles.headerTitle}>Emergency Numbers</Text>
+                    <Text style={styles.headerSub}>Egypt • Available 24/7 • All free</Text>
                 </View>
             </LinearGradient>
 
-            <View style={styles.searchWrap}>
-                <Feather name="search" size={18} color="#A0AEC0" />
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search emergency or help..."
-                    placeholderTextColor="#A0AEC0"
-                />
-            </View>
+            <ScrollView contentContainerStyle={styles.scrollArea} showsVerticalScrollIndicator={false}>
+                <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Feather name="search" size={20} color="#A0AEC0" />
+                    <TextInput 
+                        placeholder="Search emergency or help..." 
+                        placeholderTextColor="#A0AEC0"
+                        style={[styles.searchInput, { color: colors.text }]}
+                    />
+                </View>
 
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-
-                <Text style={styles.sectionLabelLabel}>Unified Emergency</Text>
-                <TouchableOpacity style={styles.sosCard} onPress={() => handleCall('112')}>
-                    <LinearGradient
-                        colors={['#FF4D6D', '#FF7A90']}
-                        style={styles.sosGradient}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                    >
-                        <View style={styles.sosIconWrap}>
-                            <Text style={styles.sosIcon}>📞</Text>
+                <Text style={styles.sectionLabel}>UNIFIED EMERGENCY</Text>
+                <TouchableOpacity 
+                    style={styles.unifiedCard} 
+                    onPress={() => makeCall('112')}
+                >
+                    <LinearGradient colors={['#FF4D6D', '#FF758F']} style={styles.unifiedGradient}>
+                        <View style={styles.unifiedIconWrap}>
+                            <Feather name="phone" size={32} color="#FF4D6D" />
                         </View>
-                        <View>
-                            <Text style={styles.sosNum}>112</Text>
-                            <Text style={styles.sosTitle}>Unified Emergency</Text>
-                            <Text style={styles.sosDesc}>All emergencies · Any phone · Free ✓</Text>
+                        <View style={styles.unifiedTextWrap}>
+                            <Text style={styles.unifiedNumber}>112</Text>
+                            <Text style={styles.unifiedTarget}>Unified Emergency — Egypt</Text>
+                            <Text style={styles.unifiedSub}>All emergencies • Any phone • Free ✓</Text>
                         </View>
                     </LinearGradient>
                 </TouchableOpacity>
 
-                <View style={styles.labelRow}>
-                    <Text style={styles.sectionLabelLabel}>Specialized Lines</Text>
-                    <View style={styles.badge}><Text style={styles.badgeText}>6 numbers</Text></View>
+                <View style={styles.sectionRow}>
+                    <Text style={styles.sectionLabel}>SPECIALIZED LINES</Text>
+                    <Text style={styles.badgeText}>6 NUMBERS</Text>
                 </View>
 
                 <View style={styles.grid}>
-                    <TouchableOpacity style={styles.gridCard} onPress={() => handleCall('123')}>
-                        <View style={[styles.cardTopBar, { backgroundColor: '#FF4D6D' }]} />
-                        <View style={[styles.gridIconWrap, { backgroundColor: '#FFF0F3' }]}><Text>🚑</Text></View>
-                        <Text style={styles.gridNum}>123</Text>
-                        <Text style={styles.gridName}>Ambulance</Text>
-                        <TouchableOpacity style={[styles.gridBtn, { backgroundColor: '#FFF0F3' }]} onPress={() => handleCall('123')}>
-                            <Feather name="phone-call" size={10} color="#FF4D6D" />
-                            <Text style={[styles.gridBtnText, { color: '#FF4D6D' }]}>Call Now</Text>
-                        </TouchableOpacity>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.gridCard} onPress={() => handleCall('122')}>
-                        <View style={[styles.cardTopBar, { backgroundColor: '#3A8EF6' }]} />
-                        <View style={[styles.gridIconWrap, { backgroundColor: '#E8F1FE' }]}><Text>👮</Text></View>
-                        <Text style={styles.gridNum}>122</Text>
-                        <Text style={styles.gridName}>Police</Text>
-                        <TouchableOpacity style={[styles.gridBtn, { backgroundColor: '#E8F1FE' }]} onPress={() => handleCall('122')}>
-                            <Feather name="phone-call" size={10} color="#3A8EF6" />
-                            <Text style={[styles.gridBtnText, { color: '#3A8EF6' }]}>Call Now</Text>
-                        </TouchableOpacity>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.gridCard} onPress={() => handleCall('180')}>
-                        <View style={[styles.cardTopBar, { backgroundColor: '#F59E0B' }]} />
-                        <View style={[styles.gridIconWrap, { backgroundColor: '#FFFBEB' }]}><Text>🔥</Text></View>
-                        <Text style={styles.gridNum}>180</Text>
-                        <Text style={styles.gridName}>Fire Brigade</Text>
-                        <TouchableOpacity style={[styles.gridBtn, { backgroundColor: '#FFFBEB' }]} onPress={() => handleCall('180')}>
-                            <Feather name="phone-call" size={10} color="#F59E0B" />
-                            <Text style={[styles.gridBtnText, { color: '#F59E0B' }]}>Call Now</Text>
-                        </TouchableOpacity>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.gridCard} onPress={() => handleCall('137')}>
-                        <View style={[styles.cardTopBar, { backgroundColor: '#22C55E' }]} />
-                        <View style={[styles.gridIconWrap, { backgroundColor: '#EDFBF3' }]}><Text>🏥</Text></View>
-                        <Text style={styles.gridNum}>137</Text>
-                        <Text style={styles.gridName}>Health Ministry</Text>
-                        <TouchableOpacity style={[styles.gridBtn, { backgroundColor: '#EDFBF3' }]} onPress={() => handleCall('137')}>
-                            <Feather name="phone-call" size={10} color="#22C55E" />
-                            <Text style={[styles.gridBtnText, { color: '#22C55E' }]}>Call Now</Text>
-                        </TouchableOpacity>
-                    </TouchableOpacity>
+                    <EmergencyBox title="Ambulance" icon="ambulance" color="#3A8EF6" number="123" onPress={() => makeCall('123')} />
+                    <EmergencyBox title="Police" icon="shield-alt" color="#1E293B" number="122" onPress={() => makeCall('122')} />
+                    <EmergencyBox title="Fire Brigade" icon="fire" color="#FF9F1C" number="180" onPress={() => makeCall('180')} />
+                    <EmergencyBox title="Health Ministry" icon="hospital-user" color="#9333EA" number="137" onPress={() => makeCall('137')} />
                 </View>
 
-                {contacts && contacts.length > 0 && (
-                    <>
-                        <Text style={styles.sectionLabelLabel}>Other API Contacts</Text>
-                        {loading ? (
-                            <ActivityIndicator size="small" color="#22C55E" />
-                        ) : (
-                            contacts.map(item => (
-                                <TouchableOpacity
-                                    key={item.id}
-                                    style={[styles.ewCard, item.is_emergency && { borderLeftColor: '#FF4D6D' }]}
-                                    onPress={() => handleCall(item.phone_number)}
-                                >
-                                    <View style={[styles.ewIconWrap, { backgroundColor: item.is_emergency ? '#FFF0F3' : '#E8F1FE' }]}>
-                                        <Ionicons name={item.is_emergency ? "alert-circle" : "call"} size={18} color={item.is_emergency ? "#FF4D6D" : "#3A8EF6"} />
-                                    </View>
-                                    <View>
-                                        <Text style={styles.ewName}>{item.name}</Text>
-                                        <Text style={styles.ewSub}>{item.description}</Text>
-                                    </View>
-                                    <View style={styles.ewRight}>
-                                        <Text style={[styles.ewNum, item.is_emergency && { color: '#FF4D6D' }]}>{item.phone_number}</Text>
-                                        <View style={[styles.ewBtn, { backgroundColor: item.is_emergency ? '#FFF0F3' : '#E8F1FE' }]}>
-                                            <Text style={[styles.ewBtnText, { color: item.is_emergency ? '#FF4D6D' : '#3A8EF6' }]}>Call</Text>
-                                        </View>
-                                    </View>
-                                </TouchableOpacity>
-                            ))
-                        )}
-                    </>
-                )}
-
-                <Text style={styles.sectionLabelLabel}>Heart Emergency Tips</Text>
-                <View style={styles.tipsCard}>
-                    <View style={styles.tipsHead}>
-                        <View style={styles.tipsIcon}><Text style={{ fontSize: 12 }}>❤️</Text></View>
-                        <Text style={styles.tipsTitle}>If your heart rate spikes suddenly</Text>
-                    </View>
-                    <View style={styles.tipRow}>
-                        <View style={styles.tipNum}><Text style={styles.tipNumTxt}>1</Text></View>
-                        <Text style={styles.tipTxt}>Stay calm — sit or lie down immediately</Text>
-                    </View>
-                    <View style={styles.tipRow}>
-                        <View style={styles.tipNum}><Text style={styles.tipNumTxt}>2</Text></View>
-                        <Text style={styles.tipTxt}>Call 123 if BPM {'>'} 150 or chest pain occurs</Text>
-                    </View>
+                <Text style={styles.sectionLabel}>UTILITIES & ROADS</Text>
+                <View style={[styles.listBlock, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <UtilityItem title="Highway Rescue" icon="car" number="136" onPress={() => makeCall('136')} />
+                    <View style={styles.divider} />
+                    <UtilityItem title="Electricity Emergency" icon="bolt" number="121" onPress={() => makeCall('121')} />
+                    <View style={styles.divider} />
+                    <UtilityItem title="Water Emergency" icon="tint" number="125" onPress={() => makeCall('125')} />
+                    <View style={styles.divider} />
+                    <UtilityItem title="Gas Emergency" icon="gas-pump" number="129" onPress={() => makeCall('129')} />
                 </View>
 
+                <Text style={styles.sectionLabel}>HEART EMERGENCY TIPS</Text>
+                <View style={[styles.tipsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <View style={styles.tipsHeader}>
+                        <Text style={{ fontSize: 24, marginRight: 12 }}>❤️</Text>
+                        <Text style={[styles.tipsTitle, { color: colors.text }]}>If your heart rate spikes suddenly</Text>
+                    </View>
+                    <TipStep num="1" text="Stay calm — sit or lie down in a safe place immediately" />
+                    <TipStep num="2" text="Call 123 if BPM exceeds 150 or you feel chest pain" />
+                    <TipStep num="3" text="Alert someone nearby — do not drive alone" />
+                    <TipStep num="4" text="If heart stops — call 123 and begin CPR immediately" />
+                </View>
             </ScrollView>
         </View>
     );
 };
 
+const EmergencyBox = ({ title, icon, color, number, onPress }) => {
+    const { colors } = useTheme();
+    return (
+        <TouchableOpacity style={[styles.gridBox, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={onPress}>
+            <View style={[styles.boxIconWrap, { backgroundColor: `${color}15` }]}>
+                <FontAwesome5 name={icon} size={20} color={color} />
+            </View>
+            <Text style={[styles.boxNumber, { color: color }]}>{number}</Text>
+            <Text style={[styles.boxTitle, { color: colors.text }]}>{title}</Text>
+            <Text style={styles.activityLabel}>• 24/7 Active</Text>
+            <TouchableOpacity style={styles.callNowBtn} onPress={onPress}>
+                <Feather name="phone-call" size={12} color={color} />
+                <Text style={[styles.callNowText, { color: color }]}>Call Now</Text>
+            </TouchableOpacity>
+        </TouchableOpacity>
+    );
+};
+
+const UtilityItem = ({ title, icon, number, onPress }) => {
+    const { colors } = useTheme();
+    return (
+        <TouchableOpacity style={styles.listItem} onPress={onPress}>
+            <View style={styles.listIconWrap}>
+                 <FontAwesome5 name={icon} size={18} color="#3A8EF6" />
+            </View>
+            <View style={styles.listTextWrap}>
+                <Text style={[styles.listTitleText, { color: colors.text }]}>{title}</Text>
+                <Text style={styles.listSubText}>Road accidents • Highways</Text>
+            </View>
+            <View style={styles.listRight}>
+                <Text style={styles.utilityNumber}>{number}</Text>
+                <TouchableOpacity style={styles.miniCall} onPress={onPress}>
+                    <Feather name="phone" size={14} color="#3A8EF6" />
+                    <Text style={styles.miniCallText}>Call</Text>
+                </TouchableOpacity>
+            </View>
+        </TouchableOpacity>
+    );
+};
+
+const TipStep = ({ num, text }) => {
+    const { colors } = useTheme();
+    return (
+        <View style={styles.tipRow}>
+            <View style={styles.tipNum}>
+                <Text style={styles.tipNumText}>{num}</Text>
+            </View>
+            <Text style={[styles.tipText, { color: colors.subtext }]}>{text}</Text>
+        </View>
+    );
+};
+
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F4F8FF',
-    },
-    heroHeader: {
-        paddingTop: Platform.OS === 'ios' ? 60 : 30,
-        paddingBottom: 50,
-        borderBottomLeftRadius: 36,
-        borderBottomRightRadius: 36,
-        overflow: 'hidden',
-        position: 'relative',
-    },
-    heroBgCircle: {
-        position: 'absolute',
-        top: -30,
-        right: -30,
-        width: 140,
-        height: 140,
-        borderRadius: 70,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-    headerTop: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 24,
-        marginBottom: 20,
-    },
-    backBtn: {
-        width: 36,
-        height: 36,
-        backgroundColor: 'rgba(255,255,255,0.25)',
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    headerTitle: {
-        fontSize: 16,
-        fontWeight: '800',
-        color: 'white',
-    },
-    helpBtn: {
-        width: 36,
-        height: 36,
-        backgroundColor: 'rgba(255,255,255,0.25)',
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    heroContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 24,
-    },
-    heroIconWrap: {
-        width: 52,
-        height: 52,
-        backgroundColor: 'rgba(255,255,255,0.25)',
-        borderRadius: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 14,
-    },
-    heroIcon: {
-        fontSize: 26,
-    },
-    heroBigTitle: {
-        fontSize: 24,
-        fontWeight: '900',
-        color: 'white',
-        lineHeight: 28,
-    },
-    heroSubTitle: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.85)',
-        marginTop: 4,
-    },
-    searchWrap: {
-        marginHorizontal: 24,
-        marginTop: -24,
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        flexDirection: 'row',
-        alignItems: 'center',
-        shadowColor: '#0F1E3C',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.1,
-        shadowRadius: 24,
-        elevation: 6,
-        zIndex: 10,
-    },
-    searchInput: {
-        flex: 1,
-        marginLeft: 10,
-        fontSize: 14,
-        color: '#0F1E3C',
-    },
-    scrollContent: {
-        paddingTop: 24,
-        paddingBottom: 40,
-    },
-    sectionLabelLabel: {
-        fontSize: 11,
-        fontWeight: '800',
-        color: '#A0AEC0',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-        paddingHorizontal: 24,
-        marginBottom: 10,
-        marginTop: 10,
-    },
-    sosCard: {
-        marginHorizontal: 24,
-        marginBottom: 10,
-        borderRadius: 20,
-        overflow: 'hidden',
-        shadowColor: '#FF4D6D',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.28,
-        shadowRadius: 22,
-        elevation: 8,
-    },
-    sosGradient: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 18,
-    },
-    sosIconWrap: {
-        width: 50,
-        height: 50,
-        backgroundColor: 'rgba(255,255,255,0.22)',
-        borderRadius: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 14,
-    },
-    sosIcon: {
-        fontSize: 24,
-    },
-    sosNum: {
-        fontSize: 28,
-        fontWeight: '900',
-        color: 'white',
-    },
-    sosTitle: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.9)',
-        fontWeight: '700',
-    },
-    sosDesc: {
-        fontSize: 10,
-        color: 'rgba(255,255,255,0.7)',
-        marginTop: 2,
-    },
-    labelRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingRight: 24,
-    },
-    badge: {
-        backgroundColor: '#E8F1FE',
-        paddingVertical: 4,
-        paddingHorizontal: 10,
-        borderRadius: 10,
-    },
-    badgeText: {
-        fontSize: 10,
-        fontWeight: '700',
-        color: '#3A8EF6',
-    },
-    grid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        paddingHorizontal: 20,
-        justifyContent: 'space-between',
-    },
-    gridCard: {
-        width: '48%',
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 14,
-        marginBottom: 12,
-        shadowColor: '#0F1E3C',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2,
-        position: 'relative',
-        overflow: 'hidden',
-    },
-    cardTopBar: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 4,
-    },
-    gridIconWrap: {
-        width: 36,
-        height: 36,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 8,
-        marginTop: 4,
-    },
-    gridNum: {
-        fontSize: 22,
-        fontWeight: '900',
-        color: '#0F1E3C',
-    },
-    gridName: {
-        fontSize: 11,
-        fontWeight: '700',
-        color: '#5A6A8A',
-        marginBottom: 8,
-    },
-    gridBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 6,
-        borderRadius: 10,
-    },
-    gridBtnText: {
-        fontSize: 10,
-        fontWeight: '700',
-        marginLeft: 4,
-    },
-    ewCard: {
-        backgroundColor: '#fff',
-        marginHorizontal: 24,
-        marginBottom: 8,
-        padding: 14,
-        borderRadius: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderLeftWidth: 4,
-        borderLeftColor: '#3A8EF6',
-        shadowColor: '#0F1E3C',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2,
-    },
-    ewIconWrap: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 12,
-    },
-    ewName: {
-        fontSize: 11,
-        fontWeight: '700',
-        color: '#5A6A8A',
-    },
-    ewSub: {
-        fontSize: 10,
-        color: '#A0AEC0',
-        marginTop: 2,
-    },
-    ewRight: {
-        marginLeft: 'auto',
-        alignItems: 'flex-end',
-    },
-    ewNum: {
-        fontSize: 18,
-        fontWeight: '900',
-        color: '#0F1E3C',
-        marginBottom: 4,
-    },
-    ewBtn: {
-        paddingVertical: 4,
-        paddingHorizontal: 10,
-        borderRadius: 8,
-    },
-    ewBtnText: {
-        fontSize: 10,
-        fontWeight: '700',
-    },
-    tipsCard: {
-        marginHorizontal: 24,
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 16,
-        shadowColor: '#0F1E3C',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.06,
-        shadowRadius: 12,
-        elevation: 2,
-    },
-    tipsHead: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    tipsIcon: {
-        width: 28,
-        height: 28,
-        backgroundColor: '#FFF0F3',
-        borderRadius: 10,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 10,
-    },
-    tipsTitle: {
-        fontSize: 13,
-        fontWeight: '800',
-        color: '#0F1E3C',
-    },
-    tipRow: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginBottom: 10,
-    },
-    tipNum: {
-        width: 20,
-        height: 20,
-        backgroundColor: '#E8F1FE',
-        borderRadius: 8,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 10,
-        marginTop: 2,
-    },
-    tipNumTxt: {
-        fontSize: 11,
-        fontWeight: '800',
-        color: '#3A8EF6',
-    },
-    tipTxt: {
-        flex: 1,
-        fontSize: 12,
-        color: '#5A6A8A',
-        lineHeight: 18,
-    },
+    container: { flex: 1 },
+    header: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 24, borderBottomLeftRadius: 40, borderBottomRightRadius: 40 },
+    headerContent: { alignItems: 'center' },
+    iconCircle: { width: 80, height: 80, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 40, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+    headerTitle: { fontSize: 28, color: 'white', fontWeight: '900' },
+    headerSub: { fontSize: 14, color: 'rgba(255,255,255,0.85)', marginTop: 4, fontWeight: '700' },
+    scrollArea: { padding: 20 },
+    searchBar: { flexDirection: 'row', alignItems: 'center', borderRadius: 20, paddingHorizontal: 20, height: 56, marginBottom: 24, borderWidth: 1 },
+    searchInput: { flex: 1, marginLeft: 12, fontSize: 16, fontWeight: '600' },
+    sectionLabel: { fontSize: 12, fontWeight: '900', color: '#A0AEC0', letterSpacing: 1, marginBottom: 16 },
+    unifiedCard: { borderRadius: 24, overflow: 'hidden', marginBottom: 24 },
+    unifiedGradient: { padding: 24, flexDirection: 'row', alignItems: 'center' },
+    unifiedIconWrap: { width: 70, height: 70, backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+    unifiedTextWrap: { marginLeft: 20, flex: 1 },
+    unifiedNumber: { fontSize: 42, fontWeight: '900', color: 'white', lineHeight: 48 },
+    unifiedTarget: { fontSize: 16, fontWeight: '800', color: 'white' },
+    unifiedSub: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
+    sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+    badgeText: { fontSize: 11, fontWeight: '900', color: '#3A8EF6', backgroundColor: '#E8F1FE', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+    gridBox: { width: '48%', padding: 16, borderRadius: 20, borderWidth: 1, marginBottom: 16 },
+    boxIconWrap: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+    boxNumber: { fontSize: 28, fontWeight: '900', marginBottom: 4 },
+    boxTitle: { fontSize: 15, fontWeight: '800' },
+    activityLabel: { fontSize: 10, color: '#22C55E', fontWeight: '800', marginVertical: 8 },
+    callNowBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F4F8FF', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, justifyContent: 'center' },
+    callNowText: { fontSize: 12, fontWeight: '800', marginLeft: 6 },
+    listBlock: { borderRadius: 24, borderWidth: 1, overflow: 'hidden', marginBottom: 24 },
+    listItem: { padding: 16, flexDirection: 'row', alignItems: 'center' },
+    listIconWrap: { width: 44, height: 44, backgroundColor: '#F4F8FF', borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+    listTextWrap: { flex: 1 },
+    listTitleText: { fontSize: 15, fontWeight: '800' },
+    listSubText: { fontSize: 11, color: '#A0AEC0', fontWeight: '600' },
+    listRight: { alignItems: 'flex-end' },
+    utilityNumber: { fontSize: 20, fontWeight: '900', color: '#0F1E3C', marginBottom: 4 },
+    miniCall: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E8F1FE', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
+    miniCallText: { fontSize: 11, color: '#3A8EF6', fontWeight: '800', marginLeft: 4 },
+    divider: { height: 1, backgroundColor: '#F4F8FF', marginHorizontal: 20 },
+    tipsCard: { borderRadius: 24, padding: 24, borderWidth: 1, marginBottom: 40 },
+    tipsHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+    tipsTitle: { fontSize: 18, fontWeight: '900', flex: 1 },
+    tipRow: { flexDirection: 'row', marginBottom: 15, alignItems: 'flex-start' },
+    tipNum: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#E8F1FE', alignItems: 'center', justifyContent: 'center', marginRight: 12, marginTop: 2 },
+    tipNumText: { color: '#3A8EF6', fontSize: 13, fontWeight: '900' },
+    tipText: { fontSize: 14, lineHeight: 22, flex: 1, fontWeight: '600' }
 });
 
 export default HelpScreen;

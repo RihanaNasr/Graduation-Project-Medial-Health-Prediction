@@ -2,9 +2,23 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Feather } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const LanguageScreen = () => {
+    const { isDark, colors } = useTheme();
+    const { language, toggleLanguage, t } = useLanguage();
     const [liveText, setLiveText] = useState(true);
+
+    const handleSelectLanguage = (langCode, langName) => {
+        toggleLanguage(langCode);
+        // Simulation for graduation demo
+        Alert.alert(
+            t('language_updated'), 
+            `${t('lang_set_to')}${langName}.`,
+            [{ text: "OK" }]
+        );
+    };
 
     const handlePress = (item) => {
         Alert.alert(`${item} Settings`, `Options for ${item} will be available in the next app update.`);
@@ -18,29 +32,37 @@ const LanguageScreen = () => {
     };
 
     return (
-        <View style={styles.container}>
-            <StatusBar style="dark" />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar style={isDark ? "light" : "dark"} />
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-                <Text style={styles.sectionLabel}>PREFERRED LANGUAGES</Text>
-                <View style={styles.cardBlock}>
-                    <TouchableOpacity style={styles.listItem} onPress={() => handlePress("English")}>
+                <Text style={[styles.sectionLabel, { color: colors.subtext }]}>PREFERRED LANGUAGES</Text>
+                <View style={[styles.cardBlock, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
+                    <TouchableOpacity style={styles.listItem} onPress={() => handleSelectLanguage("en", "English")}>
                         <View style={styles.listContent}>
-                            <Text style={styles.listTitle}>English</Text>
+                            <Text style={[styles.listTitle, { color: colors.text }]}>English</Text>
                             <Text style={styles.listSub}>App Language</Text>
                         </View>
-                        <Feather name="menu" size={20} color="#A0AEC0" />
+                        {language === 'en' ? (
+                            <Feather name="check" size={20} color="#3A8EF6" />
+                        ) : (
+                            <Feather name="menu" size={20} color="#64748B" />
+                        )}
                     </TouchableOpacity>
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-                    <TouchableOpacity style={styles.listItem} onPress={() => handlePress("Arabic")}>
+                    <TouchableOpacity style={styles.listItem} onPress={() => handleSelectLanguage("ar", "العربية")}>
                         <View style={styles.listContent}>
-                            <Text style={styles.listTitle}>العربية</Text>
+                            <Text style={[styles.listTitle, { color: colors.text }]}>العربية</Text>
                             <Text style={styles.listSub}>Arabic</Text>
                         </View>
-                        <Feather name="menu" size={20} color="#A0AEC0" />
+                        {language === 'ar' ? (
+                            <Feather name="check" size={20} color="#3A8EF6" />
+                        ) : (
+                            <Feather name="menu" size={20} color="#64748B" />
+                        )}
                     </TouchableOpacity>
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                     <TouchableOpacity style={styles.listItem} onPress={handleAddLanguage}>
                         <Text style={styles.addLanguageText}>Add Language...</Text>
@@ -48,73 +70,73 @@ const LanguageScreen = () => {
                 </View>
                 <Text style={styles.footerText}>Apps and websites will use the first language in this list that they support.</Text>
 
-                <View style={styles.cardBlock}>
+                <View style={[styles.cardBlock, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
                     <TouchableOpacity style={styles.listItem} onPress={() => handlePress("Region")}>
-                        <Text style={styles.listTitle}>Region</Text>
+                        <Text style={[styles.listTitle, { color: colors.text }]}>Region</Text>
                         <View style={styles.rightContent}>
-                            <Text style={styles.valueText}>Egypt</Text>
+                            <Text style={[styles.valueText, { color: colors.subtext }]}>Egypt</Text>
                             <Feather name="chevron-right" size={18} color="#A0AEC0" />
                         </View>
                     </TouchableOpacity>
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                     <TouchableOpacity style={styles.listItem} onPress={() => handlePress("Calendar")}>
-                        <Text style={styles.listTitle}>Calendar</Text>
+                        <Text style={[styles.listTitle, { color: colors.text }]}>Calendar</Text>
                         <View style={styles.rightContent}>
-                            <Text style={styles.valueText}>Gregorian</Text>
+                            <Text style={[styles.valueText, { color: colors.subtext }]}>Gregorian</Text>
                             <Feather name="chevron-right" size={18} color="#A0AEC0" />
                         </View>
                     </TouchableOpacity>
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                     <TouchableOpacity style={styles.listItem} onPress={() => handlePress("Temperature")}>
-                        <Text style={styles.listTitle}>Temperature</Text>
+                        <Text style={[styles.listTitle, { color: colors.text }]}>Temperature</Text>
                         <View style={styles.rightContent}>
-                            <Text style={styles.valueText}>°C</Text>
+                            <Text style={[styles.valueText, { color: colors.subtext }]}>°C</Text>
                             <Feather name="chevron-right" size={18} color="#A0AEC0" />
                         </View>
                     </TouchableOpacity>
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                     <TouchableOpacity style={styles.listItem} onPress={() => handlePress("Measurement System")}>
-                        <Text style={styles.listTitle}>Measurement System</Text>
+                        <Text style={[styles.listTitle, { color: colors.text }]}>Measurement System</Text>
                         <View style={styles.rightContent}>
-                            <Text style={styles.valueText}>Metric</Text>
+                            <Text style={[styles.valueText, { color: colors.subtext }]}>Metric</Text>
                             <Feather name="chevron-right" size={18} color="#A0AEC0" />
                         </View>
                     </TouchableOpacity>
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                     <TouchableOpacity style={styles.listItem} onPress={() => handlePress("First Day of Week")}>
-                        <Text style={styles.listTitle}>First Day of Week</Text>
+                        <Text style={[styles.listTitle, { color: colors.text }]}>First Day of Week</Text>
                         <View style={styles.rightContent}>
-                            <Text style={styles.valueText}>Saturday</Text>
+                            <Text style={[styles.valueText, { color: colors.subtext }]}>Saturday</Text>
                             <Feather name="chevron-right" size={18} color="#A0AEC0" />
                         </View>
                     </TouchableOpacity>
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                     <TouchableOpacity style={styles.listItem} onPress={() => handlePress("Date Format")}>
-                        <Text style={styles.listTitle}>Date Format</Text>
+                        <Text style={[styles.listTitle, { color: colors.text }]}>Date Format</Text>
                         <View style={styles.rightContent}>
-                            <Text style={styles.valueText}>19/08/2026</Text>
+                            <Text style={[styles.valueText, { color: colors.subtext }]}>19/08/2026</Text>
                             <Feather name="chevron-right" size={18} color="#A0AEC0" />
                         </View>
                     </TouchableOpacity>
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                     <TouchableOpacity style={styles.listItem} onPress={() => handlePress("Number Format")}>
-                        <Text style={styles.listTitle}>Number Format</Text>
+                        <Text style={[styles.listTitle, { color: colors.text }]}>Number Format</Text>
                         <View style={styles.rightContent}>
-                            <Text style={styles.valueText}>1,234,567.89</Text>
+                            <Text style={[styles.valueText, { color: colors.subtext }]}>1,234,567.89</Text>
                             <Feather name="chevron-right" size={18} color="#A0AEC0" />
                         </View>
                     </TouchableOpacity>
                 </View>
 
-                <View style={[styles.cardBlock, { marginTop: 16 }]}>
+                <View style={[styles.cardBlock, { marginTop: 16, backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
                     <View style={styles.listItem}>
-                        <Text style={[styles.listTitle, { flex: 1 }]}>Live Text</Text>
+                        <Text style={[styles.listTitle, { flex: 1, color: colors.text }]}>Live Text</Text>
                         <Switch
                             trackColor={{ false: '#E4ECFD', true: '#22C55E' }}
                             thumbColor="white"
@@ -127,9 +149,9 @@ const LanguageScreen = () => {
                 <Text style={styles.footerText}>Select text in images to copy or take action.</Text>
 
                 <View style={styles.exampleBlock}>
-                    <Text style={styles.exampleTitle}>Region Format Example</Text>
-                    <Text style={styles.exampleText}>12:34 AM</Text>
-                    <Text style={styles.exampleText}>Wednesday, 19 August 2026</Text>
+                    <Text style={[styles.exampleTitle, { color: colors.text }]}>Region Format Example</Text>
+                    <Text style={[styles.exampleText, { color: colors.subtext }]}>12:34 AM</Text>
+                    <Text style={[styles.exampleText, { color: colors.subtext }]}>Wednesday, 19 August 2026</Text>
                 </View>
 
             </ScrollView>

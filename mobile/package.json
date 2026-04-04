@@ -1,5 +1,5 @@
 {
-  "name": "vitalcare-mobile",
+  "name": "cardigo-mobile",
   "version": "1.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
@@ -20,6 +20,7 @@
     "expo-image-picker": "~17.0.10",
     "expo-linear-gradient": "^55.0.8",
     "expo-status-bar": "~3.0.9",
+    "expo-web-browser": "^55.0.12",
     "metro-cache": "^0.83.3",
     "react": "19.1.0",
     "react-native": "0.81.5",
