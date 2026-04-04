@@ -22,6 +22,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { medicalAPI } from '../services/api';
 
+import { Pedometer } from 'expo-sensors';
+
 const HomeScreen = ({ navigation }) => {
     const { user } = useAuth();
     const { isDark, colors } = useTheme();
@@ -30,6 +32,13 @@ const HomeScreen = ({ navigation }) => {
     const [loading, setLoading] = React.useState(true);
     const [isAtRisk, setIsAtRisk] = React.useState(false);
     const [isEditing, setIsEditing] = React.useState(false);
+    
+    // Real Step Counter States
+    const [pedometerAvailable, setPedometerAvailable] = React.useState('checking');
+    const [pastStepCount, setPastStepCount] = React.useState(0);
+    const [currentStepCount, setCurrentStepCount] = React.useState(0);
+    const [isSimulating, setIsSimulating] = React.useState(false);
+
     const [form, setForm] = React.useState({
         heart_rate: '86',
         calories: '2100',
@@ -44,23 +53,75 @@ const HomeScreen = ({ navigation }) => {
     React.useEffect(() => {
         loadRecord();
         startPulse();
+        
+        let subscription;
+        const initPedometer = async () => {
+            subscription = await subscribeSteps();
+        };
+        initPedometer();
+
+        return () => subscription && subscription.remove();
     }, []);
+
+    // Simulation Timer
+    React.useEffect(() => {
+        let timer;
+        if (isSimulating) {
+            timer = setInterval(() => {
+                setCurrentStepCount(prev => prev + 1);
+            }, 1000); // 1 step every second
+        }
+        return () => clearInterval(timer);
+    }, [isSimulating]);
+
+    const subscribeSteps = async () => {
+        const isAvailable = await Pedometer.isAvailableAsync();
+        setPedometerAvailable(String(isAvailable));
+
+        if (isAvailable) {
+            const end = new Date();
+            const start = new Date(end);
+            start.setHours(0, 0, 0, 0); // Start of today
+
+            try {
+                const pastStepsResult = await Pedometer.getStepCountAsync(start, end);
+                if (pastStepsResult) {
+                    setPastStepCount(pastStepsResult.steps);
+                }
+            } catch (e) {
+                console.log("Could not get past steps:", e);
+            }
+
+            return Pedometer.watchStepCount(result => {
+                setCurrentStepCount(result.steps);
+            });
+        }
+    };
 
     // Monitor for risk
     React.useEffect(() => {
         const hr = parseInt(form.heart_rate);
         if (hr > 100 || hr < 60) {
             if (!isAtRisk) {
-                Vibration.vibrate([0, 500, 200, 500], true); // SOS-like vibration
+                // High-intensity SOS Vibration for demo impact
+                Vibration.vibrate([0, 500, 200, 500], true); 
+                
                 Alert.alert(
                     "⚠️ Health Risk Detected",
                     "Your heart rate is abnormal. Please take rest or call for assistance.",
-                    [{ text: "OK", onPress: () => Vibration.cancel() }]
+                    [{ 
+                        text: "OK", 
+                        onPress: () => {
+                            Vibration.cancel();
+                            setIsAtRisk(false);
+                        } 
+                    }]
                 );
             }
             setIsAtRisk(true);
             Animated.spring(alertAnim, { toValue: 1, useNativeDriver: true }).start();
         } else {
+            Vibration.cancel();
             setIsAtRisk(false);
             Animated.timing(alertAnim, { toValue: 0, duration: 400, useNativeDriver: true }).start();
         }
@@ -170,7 +231,18 @@ const HomeScreen = ({ navigation }) => {
                     <View style={styles.headerTopUser}>
                         <View style={{ flex: 1 }}>
                             <Text style={styles.greetingText}>{t('greeting')}</Text>
-                            <Text style={styles.userNameText}>{user?.first_name || 'User'} 👋</Text>
+                            <TouchableOpacity 
+                                onLongPress={() => {
+                                    setIsSimulating(!isSimulating);
+                                    Alert.alert(
+                                        isSimulating ? "Simulation OFF" : "Simulation ON",
+                                        isSimulating ? "Metric tracking returning to standard sensors." : "Auto-Walk simulation started for live steps/calories. 🚶‍♂️🔥"
+                                    );
+                                }}
+                                delayLongPress={2000}
+                            >
+                                <Text style={styles.userNameText}>{user?.first_name || 'REEM'} 👋</Text>
+                            </TouchableOpacity>
                         </View>
                         <TouchableOpacity style={styles.editBtnTop} onPress={isEditing ? handleSave : () => setIsEditing(true)}>
                             <Text style={styles.editBtnTopText}>{isEditing ? t('save') : t('edit')}</Text>
@@ -222,9 +294,44 @@ const HomeScreen = ({ navigation }) => {
 
                 {/* Vitals Grid */}
                 <View style={styles.vitalsGrid}>
-                    <VitalCard title={t('steps')} value={form.steps} icon="👣" bg="#FFF0F3" label={t('steps')} onPress={() => handleVitalPress(t('steps'), form.steps)} />
-                    <VitalCard title={t('calories')} value={form.calories} icon="🔥" bg="#F4F8FF" label={t('calories')} onPress={() => handleVitalPress(t('calories'), form.calories)} />
-                    <VitalCard title={t('water')} value={form.water} icon="💧" bg="#E8F1FE" label={t('water')} onPress={() => handleVitalPress(t('water'), form.water)} />
+                    {(() => {
+                        // Dynamic Calculation Engine
+                        const totalSteps = (pedometerAvailable === 'true' || isSimulating)
+                            ? (pastStepCount + currentStepCount) 
+                            : parseInt(form.steps || '8500');
+                        
+                        // 1 step ≈ 0.04 active calories
+                        const totalCalories = (1600 + (totalSteps * 0.05)).toFixed(0);
+
+                        return (
+                            <>
+                                <VitalCard 
+                                    title={t('steps')} 
+                                    value={totalSteps.toString()} 
+                                    icon="👣" 
+                                    bg="#FFF0F3" 
+                                    label={t('steps')} 
+                                    onPress={() => handleVitalPress(t('steps'), totalSteps.toString())} 
+                                />
+                                <VitalCard 
+                                    title={t('calories')} 
+                                    value={totalCalories} 
+                                    icon="🔥" 
+                                    bg="#F4F8FF" 
+                                    label={t('calories')} 
+                                    onPress={() => handleVitalPress(t('calories'), totalCalories)} 
+                                />
+                                <VitalCard 
+                                    title={t('water')} 
+                                    value={form.water} 
+                                    icon="💧" 
+                                    bg="#E8F1FE" 
+                                    label={t('water')} 
+                                    onPress={() => handleVitalPress(t('water'), form.water)} 
+                                />
+                            </>
+                        );
+                    })()}
                 </View>
 
                 {/* SOS & Help Contacts Section */}

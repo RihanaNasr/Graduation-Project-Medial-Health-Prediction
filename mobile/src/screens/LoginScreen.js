@@ -70,42 +70,42 @@ const LoginScreen = ({ navigation }) => {
     };
 
     const handleSocialLogin = async (provider) => {
-        if (provider === 'Google') {
-            try {
-                setSocialLoading(true);
-                // Open real in-app browser window (matches your screenshot)
-                await WebBrowser.openBrowserAsync('https://accounts.google.com');
-                
-                // Once closed, perform the "Demo Bypass" login
-                const result = await login('reem.ihab@gmail.com', 'demo_bypass', true, {
-                    email: 'reem.ihab@gmail.com',
-                    first_name: 'Reem',
-                    last_name: 'Ehab'
-                });
-                setSocialLoading(false);
-                setShowGoogleSim(false); // Cleanup simulator state
-            } catch (err) {
-                setSocialLoading(false);
-                Alert.alert('Error', 'Google sign-in was interrupted.');
-            }
-        } else {
-            // Apple Browser Experience
-            try {
-                setSocialLoading(true);
-                // Open real in-app browser window for Apple (Silent)
-                await WebBrowser.openBrowserAsync('https://appleid.apple.com');
-                
-                // Once closed, perform the "Demo Bypass" login
-                const result = await login('reem_ihab@icloud.com', 'demo_bypass', true, {
-                    email: 'reem_ihab@icloud.com',
-                    first_name: 'Apple',
-                    last_name: 'User'
-                });
-                setSocialLoading(false);
-            } catch (err) {
-                setSocialLoading(false);
-                Alert.alert('Error', 'Apple sign-in was interrupted.');
-            }
+        try {
+            setSocialLoading(true);
+            const authUrl = provider === 'Google' 
+                ? 'https://accounts.google.com' 
+                : 'https://appleid.apple.com';
+            
+            await WebBrowser.openBrowserAsync(authUrl);
+            
+            // SECURITY CHECK: Ensure only REEM can unlock this profile
+            Alert.prompt(
+                "🔐 Secure Medical Unlock",
+                `Identity verification required for: ${provider === 'Google' ? 'reem.ehab@gmail.com' : 'CardiGo User'}.\n\nPlease enter your 4-digit Security PIN to continue.`,
+                [
+                    { text: "Cancel", style: "cancel", onPress: () => setSocialLoading(false) },
+                    { 
+                        text: "Verify", 
+                        onPress: async (pin) => {
+                            if (pin === "2024") { // Your demo PIN
+                                await login(null, null, true, {
+                                    email: provider === 'Google' ? 'reem.ehab@gmail.com' : 'reem_ihab@icloud.com',
+                                    first_name: provider === 'Google' ? 'Reem' : 'Apple',
+                                    last_name: 'Ehab'
+                                });
+                                setShowGoogleSim(false);
+                            } else {
+                                Alert.alert("Access Denied", "Incorrect Security PIN. Unauthorized access to medical records is prohibited.");
+                                setSocialLoading(false);
+                            }
+                        }
+                    }
+                ],
+                'secure-text'
+            );
+        } catch (error) {
+            Alert.alert("Error", "Could not connect to secure authentication portal.");
+            setSocialLoading(false);
         }
     };
 
@@ -176,27 +176,7 @@ const LoginScreen = ({ navigation }) => {
                     </View>
 
                     <View style={styles.forgotPassRow}>
-                        <TouchableOpacity onPress={() => {
-                            Alert.alert(
-                                "Reset Password",
-                                "Please enter your email to receive a secure password reset link.",
-                                [
-                                    { text: "Cancel", style: "cancel" },
-                                    { 
-                                        text: "Send Link", 
-                                        onPress: () => {
-                                            setTimeout(() => {
-                                                Alert.alert(
-                                                    "Check Your Inbox",
-                                                    "A secure verification link has been sent to your email address. Please follow the instructions to reset your password.",
-                                                    [{ text: "OK" }]
-                                                );
-                                            }, 800);
-                                        }
-                                    }
-                                ]
-                            );
-                        }}>
+                        <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
                             <Text style={styles.forgotPassText}>Forgot Password?</Text>
                         </TouchableOpacity>
                     </View>

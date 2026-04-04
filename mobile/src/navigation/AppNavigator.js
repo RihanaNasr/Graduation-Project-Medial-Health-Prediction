@@ -22,6 +22,8 @@ import HistoryScreen from '../screens/HistoryScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import LegalContentScreen from '../screens/LegalContentScreen';
 
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -33,6 +35,7 @@ const AuthStack = () => (
     >
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
     </Stack.Navigator>
 );
 

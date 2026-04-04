@@ -19,6 +19,8 @@
     "expo": "^54.0.33",
     "expo-image-picker": "~17.0.10",
     "expo-linear-gradient": "^55.0.8",
+    "expo-modules-core": "~3.0.29",
+    "expo-sensors": "~15.0.8",
     "expo-status-bar": "~3.0.9",
     "expo-web-browser": "^55.0.12",
     "metro-cache": "^0.83.3",
