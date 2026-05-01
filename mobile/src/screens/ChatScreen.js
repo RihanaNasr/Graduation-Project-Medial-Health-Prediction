@@ -75,9 +75,9 @@ const ChatScreen = () => {
         setLoading(true);
 
         try {
-            const response = await medicalAPI.chat(currentMsg);
+            const response = await medicalAPI.chat(currentMsg, user?.email);
             const aiMessage = {
-                id: `ai-${response.data.id}`,
+                id: `ai-${response.data.id || Date.now()}`,
                 text: response.data.response,
                 isUser: false,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })

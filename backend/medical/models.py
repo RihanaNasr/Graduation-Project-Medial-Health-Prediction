@@ -46,6 +46,34 @@ class MedicalRecord(models.Model):
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def calculate_severity_rate(self):
+        """
+        AI Logic: Calculates severity percentage (0-100) based on clinical thresholds.
+        80%+ means critical/hospitalization recommended.
+        """
+        score = 0
+        
+        # 1. Heart Rate (Dangerous: <50 or >120)
+        if self.heart_rate > 140 or self.heart_rate < 40: score += 40
+        elif self.heart_rate > 110 or self.heart_rate < 55: score += 20
+        
+        # 2. SpO2 (Dangerous: <92)
+        if self.spo2 < 90: score += 40
+        elif self.spo2 < 94: score += 25
+        
+        # 3. Temperature (Fever: >38.5)
+        if self.temperature > 39.5: score += 20
+        elif self.temperature > 38.5: score += 10
+        
+        return min(score, 100)
+
+    def get_hospital_recommendation(self):
+        """Logic-based prediction for hospitalization"""
+        rate = self.calculate_severity_rate()
+        if rate >= 80: return "CRITICAL: Immediate Hospitalization Required"
+        if rate >= 50: return "WARNING: Urgent Medical Consultation Recommended"
+        return "STABLE: Home Monitoring Sufficient"
     
     def __str__(self):
         return f"Medical Record - {self.user.email}"
@@ -87,3 +115,25 @@ class HelpContact(models.Model):
         verbose_name = 'Help Contact'
         verbose_name_plural = 'Help Contacts'
         ordering = ['-is_emergency', 'name']
+
+
+class Alert(models.Model):
+    """Model for tracking medical alerts and emergencies"""
+    PRIORITY_CHOICES = [
+        ('critical', 'Critical'),
+        ('warning', 'Warning'),
+        ('info', 'Info'),
+    ]
+    
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='alerts')
+    message = models.TextField()
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='info')
+    is_resolved = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.priority.upper()} - {self.user.email} - {self.timestamp}"
+    
+    class Meta:
+        ordering = ['-timestamp']

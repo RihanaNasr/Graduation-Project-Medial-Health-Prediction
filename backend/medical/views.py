@@ -100,8 +100,10 @@ class SOSView(APIView):
                 "vitals": {
                     "heart_rate": record.heart_rate,
                     "blood_pressure": record.blood_pressure,
-                    "oxygen": record.spo2
+                    "oxygen": record.spo2,
+                    "severity_rate": f"{record.calculate_severity_rate()}%"
                 },
+                "recommendation": record.get_hospital_recommendation(),
                 "contact": contact_info,
                 "action": "Sending SMS to emergency contact and calling nearest ambulance..."
             }
@@ -120,10 +122,14 @@ class ReportExportView(APIView):
             
             report = {
                 "title": f"CardiGO Health Summary - {datetime.date.today()}",
-                "patient": request.user.email,
+                "patient": f"{request.user.first_name} {request.user.last_name}",
+                "severity_analysis": {
+                    "severity_rate": f"{record.calculate_severity_rate()}%",
+                    "status": record.get_hospital_recommendation()
+                },
                 "current_vitals": MedicalRecordSerializer(record).data,
                 "risk_history": ChatMessageSerializer(history, many=True).data,
-                "doctor_notes": "Patient has been monitoring cardiovascular patterns. Vitals are currently within database-driven safety zones."
+                "doctor_notes": "Automated analysis completed. Clinical threshold monitoring active."
             }
             return Response(report, status=status.HTTP_200_OK)
         except Exception as e:

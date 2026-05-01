@@ -6,7 +6,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // For iOS simulator: http://localhost:8000
 // For physical device: http://<YOUR_COMPUTER_IP>:8000
 // Use a more stable direct connection for the backend
-const API_URL = 'http://10.20.229.20:8000/api';
+const API_URL = 'http://10.20.228.171:8000/api';
+const CHATBOT_URL = 'http://10.20.228.171:5000'; // Our new chatbot server!
 
 const api = axios.create({
     baseURL: API_URL,
@@ -70,12 +71,14 @@ export const authAPI = {
     login: (data) => api.post('/auth/login/', data),
     getProfile: () => api.get('/auth/profile/'),
     updateProfile: (data) => api.put('/auth/profile/', data),
+    changePassword: (data) => api.post('/auth/password/change/', data),
 };
 
 export const medicalAPI = {
     getRecord: () => api.get('/medical/record/'),
-    updateRecord: (data) => api.put('/medical/record/', data),
-    chat: (message) => api.post('/medical/chat/', { message }),
+    updateRecord: (data) => api.patch('/medical/record/', data),
+    // Pointed to our new assistant
+    chat: (message, user_email) => axios.post(`${CHATBOT_URL}/chat`, { message, user_email }),
     getChatHistory: () => api.get('/medical/chat/history/'),
     getHelpContacts: () => api.get('/medical/help/contacts/'),
     triggerSOS: () => api.post('/medical/sos/'),

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvo
 import { StatusBar } from 'expo-status-bar';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { authAPI } from '../services/api';
 
 const ChangePasswordScreen = ({ navigation }) => {
     const { isDark, colors } = useTheme();
@@ -11,7 +12,9 @@ const ChangePasswordScreen = ({ navigation }) => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPasswords, setShowPasswords] = useState(false);
 
-    const handleUpdate = () => {
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleUpdate = async () => {
         if (!oldPassword || !newPassword || !confirmPassword) {
             Alert.alert("Error", "Please fill in all fields.");
             return;
@@ -25,12 +28,26 @@ const ChangePasswordScreen = ({ navigation }) => {
             return;
         }
 
-        // Simulate API call
-        Alert.alert(
-            "Success", 
-            "Your password has been updated successfully.",
-            [{ text: "OK", onPress: () => navigation.goBack() }]
-        );
+        setIsLoading(true);
+        try {
+            await authAPI.changePassword({
+                old_password: oldPassword,
+                new_password: newPassword
+            });
+            Alert.alert(
+                "Success", 
+                "Your password has been updated successfully in the database.",
+                [{ text: "OK", onPress: () => navigation.goBack() }]
+            );
+        } catch (error) {
+            console.error("Change password error:", error);
+            const errorMsg = error.response?.data?.old_password?.[0] || 
+                             error.response?.data?.detail || 
+                             "Failed to change password. Please check your current password.";
+            Alert.alert("Error", errorMsg);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (

@@ -146,8 +146,8 @@ const HomeScreen = ({ navigation }) => {
 
     const loadRecord = async () => {
         try {
-            const response = await medicalAPI.getRecords(); // Get full history to find latest
-            const latest = response.data[0]; 
+            const response = await medicalAPI.getRecord(); // Get current user's record
+            const latest = response.data; 
             if (latest) {
                 setRecord(latest);
                 setForm({
@@ -178,9 +178,9 @@ const HomeScreen = ({ navigation }) => {
         try {
             const dataToUpdate = {
                 heart_rate: parseInt(form.heart_rate),
-                oxygen_level: 98,
+                spo2: 98,
                 blood_pressure: "120/80",
-                body_temperature: 36.6,
+                temperature: 36.6,
                 steps: parseInt(form.steps),
                 calories: parseInt(form.calories),
                 water: parseFloat(form.water)
@@ -363,9 +363,14 @@ const HomeScreen = ({ navigation }) => {
                         <View style={{ flex: 1 }}>
                             <Text style={styles.insightTitle}>Daily Suggestion</Text>
                             <Text style={styles.insightText}>
-                                {parseInt(form.steps) < 5000 ? "You're a bit low on steps. A short walk can improve your heart circulation! 🚶" :
-                                 parseFloat(form.water) < 1.5 ? "Try to drink a glass of water now to stay hydrated. 💧" :
-                                 "You're doing great! Keep up the healthy pace today. 🌟"}
+                                {(() => {
+                                    const hr = parseInt(form.heart_rate) || 0;
+                                    if (hr > 100) return `Your heart rate is elevated (${hr} bpm). Please take a moment to rest and monitor your symptoms. ⚠️`;
+                                    if (hr < 60 && hr > 0) return `Your heart rate is low (${hr} bpm). If you feel dizzy, seek medical advice. ⚠️`;
+                                    if (parseInt(form.steps) < 5000) return "You're a bit low on steps. A short walk can improve your heart circulation! 🚶";
+                                    if (parseFloat(form.water) < 1.5) return "Try to drink a glass of water now to stay hydrated. 💧";
+                                    return "All your vitals look stable! You're doing great! Keep up the healthy pace today. 🌟";
+                                })()}
                             </Text>
                         </View>
                     </LinearGradient>

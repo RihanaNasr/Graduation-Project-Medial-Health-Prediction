@@ -35,11 +35,17 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'email', 'username', 'first_name', 'last_name', 
                   'phone_number', 'date_of_birth', 'gender', 'profile_picture', 
-                  'created_at', 'updated_at']
-        read_only_fields = ['id', 'email', 'created_at', 'updated_at']
+                  'created_at', 'updated_at', 'is_staff', 'is_active']
+        read_only_fields = ['id', 'email', 'created_at', 'updated_at', 'is_staff', 'is_active']
 
 
 class UserLoginSerializer(serializers.Serializer):
     """Serializer for user login"""
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """Serializer for changing password from the mobile app"""
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+

@@ -135,12 +135,14 @@ const DashboardScreen = ({ navigation }) => {
         try {
             setLoading(true);
             const response = await medicalAPI.exportReport();
-            const { title, current_vitals } = response.data;
+            const { title, current_vitals, severity_analysis } = response.data;
             
             Alert.alert(
                 `📄 ${title}`,
                 `The report has been generated successfully.\n\n` +
-                `Summary for Doctor:\n` +
+                `📊 Severity Rate: ${severity_analysis.severity_rate}\n` +
+                `🏥 Recommendation: ${severity_analysis.status}\n\n` +
+                `Detailed Vitals:\n` +
                 `• BP: ${current_vitals.blood_pressure}\n` +
                 `• HR: ${current_vitals.heart_rate} bpm\n` +
                 `• Temp: ${current_vitals.temperature}°C\n\n` +
@@ -194,36 +196,56 @@ const DashboardScreen = ({ navigation }) => {
                 </View>
 
                 {/* Risk Card */}
-                <LinearGradient
-                    colors={['#FF4D6D', '#FF758F']}
-                    style={styles.riskCard}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                >
-                    <View style={styles.riskCardInner}>
-                        <View style={styles.riskIconWrap}>
-                            <Feather name="activity" size={24} color="#FFF" />
-                        </View>
-                        <View style={styles.riskContent}>
-                            <Text style={styles.riskLabel}>{t('risk').toUpperCase()}</Text>
-                            <Text style={styles.riskTitle}>{t('low_risk')} ✓</Text>
-                            <Text style={styles.riskSub}>All vitals within normal range</Text>
-                        </View>
-                        <View style={styles.riskValueWrap}>
-                            {isEditing ? (
-                                <TextInput
-                                    style={styles.riskInput}
-                                    value={form.heart_rate}
-                                    onChangeText={(text) => setForm({ ...form, heart_rate: text })}
-                                    keyboardType="numeric"
-                                />
-                            ) : (
-                                <Text style={styles.riskValue}>{form.heart_rate}</Text>
-                            )}
-                            <Text style={styles.riskUnit}>bpm now</Text>
-                        </View>
-                    </View>
-                </LinearGradient>
+                {(() => {
+                    const hr = parseInt(form.heart_rate);
+                    const spo2 = parseInt(form.spo2);
+                    let riskText = t('low_risk');
+                    let riskColor = ['#3A8EF6', '#5BADFF']; // Blue for normal
+                    let riskSub = "All vitals within normal range";
+                    
+                    if (hr > 140 || hr < 40 || spo2 < 90) {
+                        riskText = "CRITICAL RISK";
+                        riskColor = ['#ef4444', '#ff7b7b']; // Bright Red
+                        riskSub = "Immediate Hospitalization Recommended";
+                    } else if (hr > 105 || hr < 55 || spo2 < 94) {
+                        riskText = "WARNING: HIGH RISK";
+                        riskColor = ['#f59e0b', '#fbbf24']; // Warning Amber
+                        riskSub = "Urgent Medical Consultation Required";
+                    }
+
+                    return (
+                        <LinearGradient
+                            colors={riskColor}
+                            style={styles.riskCard}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                        >
+                            <View style={styles.riskCardInner}>
+                                <View style={styles.riskIconWrap}>
+                                    <Feather name={riskText.includes('CRITICAL') ? 'alert-triangle' : 'activity'} size={24} color="#FFF" />
+                                </View>
+                                <View style={styles.riskContent}>
+                                    <Text style={styles.riskLabel}>{t('risk').toUpperCase()}</Text>
+                                    <Text style={styles.riskTitle}>{riskText} {riskText.includes('Low') ? '✓' : '⚠️'}</Text>
+                                    <Text style={styles.riskSub}>{riskSub}</Text>
+                                </View>
+                                <View style={styles.riskValueWrap}>
+                                    {isEditing ? (
+                                        <TextInput
+                                            style={styles.riskInput}
+                                            value={form.heart_rate}
+                                            onChangeText={(text) => setForm({ ...form, heart_rate: text })}
+                                            keyboardType="numeric"
+                                        />
+                                    ) : (
+                                        <Text style={styles.riskValue}>{form.heart_rate}</Text>
+                                    )}
+                                    <Text style={styles.riskUnit}>bpm now</Text>
+                                </View>
+                            </View>
+                        </LinearGradient>
+                    );
+                })()}
 
                 {/* 2x2 Grid */}
                 <View style={styles.gridRow}>

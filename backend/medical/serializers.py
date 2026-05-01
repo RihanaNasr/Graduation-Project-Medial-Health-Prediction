@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import MedicalRecord, ChatMessage, HelpContact
+from .models import MedicalRecord, ChatMessage, HelpContact, Alert
 
 
 class MedicalRecordSerializer(serializers.ModelSerializer):
@@ -31,3 +31,16 @@ class HelpContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = HelpContact
         fields = '__all__'
+
+
+class AlertSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+    user_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Alert
+        fields = ['id', 'user', 'user_email', 'user_name', 'message', 'priority', 'is_resolved', 'timestamp', 'resolved_at']
+        read_only_fields = ['id', 'timestamp', 'resolved_at']
+
+    def get_user_name(self, obj):
+        return f"{obj.user.first_name} {obj.user.last_name}"
